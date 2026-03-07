@@ -1,0 +1,33 @@
+server:
+  host: 0.0.0.0
+  port: 8080
+
+database:
+  host: localhost
+  port: 5432
+  user: postgres
+  password: postgres
+  database: warehouse_inventory
+  ssl_mode: disable
+  max_conns: 25
+
+redis:
+  host: localhost
+  port: 6379
+  password: ""
+  db: 0
+
+kafka:
+  brokers:
+    - localhost:9092
+  topic: warehouse-events
+  group_id: warehouse-worker
+
+worker:
+  pool_size: 5
+  queue_size: 100
+  retry_count: 3
+  retry_delay: 1s
+  batch_size: 10
+
+log_level: info
