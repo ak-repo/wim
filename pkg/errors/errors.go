@@ -3,6 +3,7 @@ package errors
 import "errors"
 
 var (
+	//common
 	ErrNotFound          = errors.New("resource not found")
 	ErrAlreadyExists     = errors.New("resource already exists")
 	ErrInvalidInput      = errors.New("invalid input")
@@ -12,6 +13,8 @@ var (
 	ErrConcurrentUpdate  = errors.New("concurrent update detected")
 	ErrInsufficientStock = errors.New("insufficient stock")
 	ErrInvalidOperation  = errors.New("invalid operation")
+	ErrCheckingFaild     = errors.New("failed to check existing")
+
 )
 
 type Error struct {

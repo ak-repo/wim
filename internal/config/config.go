@@ -10,6 +10,7 @@ import (
 
 type Config struct {
 	Server   ServerConfig
+	Auth     AuthConfig
 	Database DatabaseConfig
 	Redis    RedisConfig
 	Kafka    KafkaConfig
@@ -20,6 +21,13 @@ type Config struct {
 type ServerConfig struct {
 	Port int
 	Host string
+}
+
+type AuthConfig struct {
+	JWTSecret       string
+	JWTIssuer       string
+	AccessTokenTTL  time.Duration
+	RefreshTokenTTL time.Duration
 }
 
 type DatabaseConfig struct {
@@ -84,6 +92,10 @@ func Load() *Config {
 
 	v.SetDefault("server.port", 8080)
 	v.SetDefault("server.host", "0.0.0.0")
+	v.SetDefault("auth.jwt_secret", "change-me-in-production")
+	v.SetDefault("auth.jwt_issuer", "wim")
+	v.SetDefault("auth.access_token_ttl", "15m")
+	v.SetDefault("auth.refresh_token_ttl", "168h")
 
 	v.SetDefault("database.host", "localhost")
 	v.SetDefault("database.port", 5432)
@@ -118,6 +130,12 @@ func Load() *Config {
 		Server: ServerConfig{
 			Port: v.GetInt("server.port"),
 			Host: v.GetString("server.host"),
+		},
+		Auth: AuthConfig{
+			JWTSecret:       v.GetString("auth.jwt_secret"),
+			JWTIssuer:       v.GetString("auth.jwt_issuer"),
+			AccessTokenTTL:  v.GetDuration("auth.access_token_ttl"),
+			RefreshTokenTTL: v.GetDuration("auth.refresh_token_ttl"),
 		},
 		Database: DatabaseConfig{
 			URL:      v.GetString("database.url"),

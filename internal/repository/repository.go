@@ -4,6 +4,7 @@ import "github.com/ak-repo/wim/internal/db"
 
 type Repositories struct {
 	User UserRepository
+	Auth AuthRepository
 }
 
 type Dependencies struct {
@@ -14,5 +15,6 @@ type Dependencies struct {
 func NewRepositories(deps Dependencies) *Repositories {
 	return &Repositories{
 		User: NewUserRepository(deps.DB),
+		Auth: NewAuthRepository(deps.DB),
 	}
 }

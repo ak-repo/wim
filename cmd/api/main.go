@@ -12,11 +12,12 @@ import (
 
 	"github.com/ak-repo/wim/internal/config"
 	"github.com/ak-repo/wim/internal/db"
-	dbutil "github.com/ak-repo/wim/internal/db"
 	"github.com/ak-repo/wim/internal/http/handler"
 	"github.com/ak-repo/wim/internal/http/router"
 	"github.com/ak-repo/wim/internal/repository"
 	"github.com/ak-repo/wim/internal/service"
+	"github.com/ak-repo/wim/pkg/auth"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func main() {
@@ -32,18 +33,6 @@ func main() {
 	}
 	defer pgDB.Close()
 
-	sqlDB, err := dbutil.OpenSQLConnection(ctx, cfg.Database)
-	if err != nil {
-		log.Fatal("failed to open migration database connection", "error", err)
-	}
-	defer sqlDB.Close()
-
-	log.Println("running database migrations")
-	if err := dbutil.RunMigrations(sqlDB); err != nil {
-		log.Fatal("database migration failed", "error", err)
-	}
-	log.Println("database migrations completed")
-
 	redisClient, err := db.NewRedisClient(ctx, cfg.Redis)
 	if err != nil {
 		log.Fatal("failed to connect to redis", "error", err)
@@ -55,16 +44,21 @@ func main() {
 		Redis: redisClient,
 	})
 
+	passwordHasher := auth.NewBcryptPasswordHasher(bcrypt.DefaultCost)
+	tokenManager := auth.NewJWTTokenManager(cfg.Auth.JWTSecret, cfg.Auth.JWTIssuer, cfg.Auth.AccessTokenTTL)
+
 	services := service.NewServices(service.Dependencies{
-		Repositories: repos,
+		Repositories:   repos,
+		PasswordHasher: passwordHasher,
+		TokenManager:   tokenManager,
 	})
 
 	handlers := handler.NewHandlers(services)
 
-	router := router.SetupRoutes(handlers)
+	router := router.SetupRoutes(handlers, tokenManager)
 
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%d", cfg.Server.Port),
+		Addr:    fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port),
 		Handler: router,
 	}
 

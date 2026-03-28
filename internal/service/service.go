@@ -2,18 +2,23 @@ package service
 
 import (
 	"github.com/ak-repo/wim/internal/repository"
+	"github.com/ak-repo/wim/pkg/auth"
 )
 
-type Service struct {
+type Services struct {
 	User UserService
+	Auth AuthService
 }
 
 type Dependencies struct {
-	Repositories *repository.Repositories
+	Repositories   *repository.Repositories
+	PasswordHasher auth.PasswordHasher
+	TokenManager   auth.TokenManager
 }
 
-func NewServices(deps Dependencies) *Service {
-	return &Service{
-		User: NewUserService(deps.Repositories.User),
+func NewServices(deps Dependencies) *Services {
+	return &Services{
+		User: NewUserService(deps.Repositories),
+		Auth: NewAuthService(deps.Repositories, deps.TokenManager, deps.PasswordHasher),
 	}
 }
