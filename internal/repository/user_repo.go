@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/ak-repo/wim/internal/db"
 	"github.com/ak-repo/wim/internal/model"
@@ -24,8 +25,8 @@ type UserRepository interface {
 	Update(ctx context.Context, user *model.UserRequest) error
 	Delete(ctx context.Context, userID uuid.UUID) error
 
-	List(ctx context.Context, limit, offset int) (model.UserDTOs, error)
-	Count(ctx context.Context) (int, error)
+	List(ctx context.Context, params *model.UserParams) (model.UserDTOs, error)
+	Count(ctx context.Context, params *model.UserParams) (int, error)
 }
 
 type userRepository struct {
@@ -145,12 +146,33 @@ func scanUser(ctx context.Context, database *db.DB, query string, args ...any) (
 	return &row, nil
 }
 
-func (r *userRepository) List(ctx context.Context, limit, offset int) (model.UserDTOs, error) {
+func (r *userRepository) List(ctx context.Context, params *model.UserParams) (model.UserDTOs, error) {
+	args := []interface{}{}
+	conditions := []string{}
 	query := `
 		SELECT id, username, email, password_hash, role, contact, is_active, created_at, updated_at
-		FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2
+		FROM users
 	`
-	rows, err := scanUsers(ctx, r.db, query, limit, offset)
+
+	// Active users filter
+	if params.Active != nil {
+		conditions = append(conditions, fmt.Sprintf("is_active = $%d", len(args)+1))
+		args = append(args, *params.Active)
+	}
+
+	// Apply WHERE if conditions exist
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	// Pagination
+	offset := (params.Page - 1) * params.Limit
+	query += fmt.Sprintf(" ORDER BY created_at DESC LIMIT $%d OFFSET $%d",
+		len(args)+1, len(args)+2,
+	)
+	args = append(args, params.Limit, offset)
+
+	rows, err := scanUsers(ctx, r.db, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("list users: %w", err)
 	}
@@ -158,9 +180,25 @@ func (r *userRepository) List(ctx context.Context, limit, offset int) (model.Use
 	return rows, nil
 }
 
-func (r *userRepository) Count(ctx context.Context) (int, error) {
+func (r *userRepository) Count(ctx context.Context, params *model.UserParams) (int, error) {
 	var count int
-	err := r.db.Pool.QueryRow(ctx, `SELECT COUNT(*) FROM users`).Scan(&count)
+	args := []interface{}{}
+	conditions := []string{}
+
+	query := `SELECT COUNT(*) FROM users`
+
+	// Active users filter
+	if params.Active != nil {
+		conditions = append(conditions, fmt.Sprintf("is_active = $%d", len(args)+1))
+		args = append(args, *params.Active)
+	}
+
+	// Apply WHERE if conditions exist
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	err := r.db.Pool.QueryRow(ctx, query).Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("count users: %w", err)
 	}

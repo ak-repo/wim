@@ -14,7 +14,7 @@ var (
 	ErrInsufficientStock = errors.New("insufficient stock")
 	ErrInvalidOperation  = errors.New("invalid operation")
 	ErrCheckingFaild     = errors.New("failed to check existing")
-
+	ErrDataBase          = errors.New("database error")
 )
 
 type Error struct {

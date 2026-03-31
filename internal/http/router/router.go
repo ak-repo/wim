@@ -58,12 +58,18 @@ func SetupRoutes(handlers *handler.Handler, tokenManager auth.TokenManager) http
 
 func AdminRoutes(r chi.Router, handlers *handler.Handler, tokenManager auth.TokenManager) {
 	r.Route("/admin", func(admin chi.Router) {
-		admin.Post("/auth/login", handlers.Auth.Login)
-		admin.Post("/auth/register", handlers.Auth.Register)
 
-		admin.Group(func(protected chi.Router) {
-			protected.Use(wimMiddleware.RequireAuth(tokenManager))
-			protected.Get("/users", handlers.User.ListUsers)
+		// Route for Auth
+		admin.Route("/auth", func(auth chi.Router) {
+			auth.Post("/login", handlers.Auth.Login)
+			auth.Post("/register", handlers.Auth.Register)
+		})
+
+		//Auth for Users
+		admin.Route("/users", func(users chi.Router) {
+			users.Use(wimMiddleware.RequireAuth(tokenManager))
+			users.Get("", handlers.User.ListUsers)
+
 		})
 	})
 

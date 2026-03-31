@@ -68,3 +68,10 @@ func (m *UserDTO) ToAPI() *UserResponse {
 	}
 
 }
+
+// Parameter struct for List API
+type UserParams struct {
+	Active *bool `json:"active"`
+	Page   int   `json:"page"`
+	Limit  int   `json:"limit"`
+}
