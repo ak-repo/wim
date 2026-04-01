@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ak-repo/wim/internal/config"
+	"github.com/ak-repo/wim/config"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 

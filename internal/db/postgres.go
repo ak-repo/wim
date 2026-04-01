@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ak-repo/wim/internal/config"
+	"github.com/ak-repo/wim/config"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 

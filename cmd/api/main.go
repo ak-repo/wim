@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ak-repo/wim/internal/config"
+	"github.com/ak-repo/wim/config"
 	"github.com/ak-repo/wim/internal/db"
 	"github.com/ak-repo/wim/internal/http/handler"
 	"github.com/ak-repo/wim/internal/http/router"

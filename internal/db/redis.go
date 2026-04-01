@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ak-repo/wim/internal/config"
+	"github.com/ak-repo/wim/config"
 	"github.com/redis/go-redis/v9"
 )
 

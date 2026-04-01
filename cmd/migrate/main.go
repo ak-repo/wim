@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ak-repo/wim/internal/config"
+	"github.com/ak-repo/wim/config"
 	dbutil "github.com/ak-repo/wim/internal/db"
 	"github.com/pressly/goose/v3"
 )
