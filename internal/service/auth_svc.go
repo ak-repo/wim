@@ -3,9 +3,11 @@ package service
 import (
 	"context"
 	"errors"
+	"log"
 	"strings"
 	"time"
 
+	"github.com/ak-repo/wim/internal/constants"
 	"github.com/ak-repo/wim/internal/model"
 	"github.com/ak-repo/wim/internal/repository"
 	"github.com/ak-repo/wim/pkg/auth"
@@ -59,14 +61,14 @@ func (s *authService) Register(ctx context.Context, input *model.RegisterRequest
 		Username:     strings.TrimSpace(input.Username),
 		Email:        input.Email,
 		PasswordHash: passwordHash,
-		Role:         input.Role,
-		Contact:      &input.Contact,
+		Role:         constants.RoleWorker,
 		IsActive:     true,
 		UpdatedAt:    now,
 		CreatedAt:    now,
 	}
 
 	if err := s.repos.User.Create(ctx, user); err != nil {
+		log.Println("error creating user", err)
 		return err
 	}
 
@@ -125,7 +127,8 @@ func (s *authService) issueTokens(ctx context.Context, user *model.UserDTO) (*mo
 	}
 
 	if err := s.repos.Auth.StoreRefreshToken(ctx, storedToken); err != nil {
-		return nil, err
+		log.Println("error storing refresh token", err)
+		// return nil, err
 	}
 
 	return &model.AuthResponse{

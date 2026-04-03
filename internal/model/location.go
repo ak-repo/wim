@@ -6,6 +6,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type LocationDTO struct {
+	ID           uuid.UUID `db:"id"`
+	WarehouseID  uuid.UUID `db:"warehouse_id"`
+	Zone         string    `db:"zone"`
+	Aisle        *string   `db:"aisle"`
+	Rack         *string   `db:"rack"`
+	Bin          *string   `db:"bin"`
+	LocationCode string    `db:"location_code"`
+	LocationType string    `db:"location_type"`
+	IsPickFace   bool      `db:"is_pick_face"`
+	MaxWeight    *float64  `db:"max_weight"`
+	IsActive     bool      `db:"is_active"`
+	CreatedAt    time.Time `db:"created_at"`
+	UpdatedAt    time.Time `db:"updated_at"`
+}
+
 type CreateLocationRequest struct {
 	WarehouseID  uuid.UUID `json:"warehouseId"`
 	Zone         string    `json:"zone"`
@@ -44,4 +60,40 @@ type LocationResponse struct {
 	IsActive     bool      `json:"isActive"`
 	CreatedAt    time.Time `json:"createdAt"`
 	UpdatedAt    time.Time `json:"updatedAt"`
+}
+
+type LocationParams struct {
+	Active      *bool     `json:"active"`
+	WarehouseID uuid.UUID `json:"warehouseId,omitempty"`
+	Zone        string    `json:"zone,omitempty"`
+	Page        int       `json:"page"`
+	Limit       int       `json:"limit"`
+}
+
+type LocationDTOs []*LocationDTO
+
+func (m *LocationDTOs) ToAPIResponse() []*LocationResponse {
+	var responses []*LocationResponse
+	for _, dto := range *m {
+		responses = append(responses, dto.ToAPIResponse())
+	}
+	return responses
+}
+
+func (m *LocationDTO) ToAPIResponse() *LocationResponse {
+	return &LocationResponse{
+		ID:           m.ID,
+		WarehouseID:  m.WarehouseID,
+		Zone:         m.Zone,
+		Aisle:        *m.Aisle,
+		Rack:         *m.Rack,
+		Bin:          *m.Bin,
+		LocationCode: m.LocationCode,
+		LocationType: m.LocationType,
+		IsPickFace:   m.IsPickFace,
+		MaxWeight:    m.MaxWeight,
+		IsActive:     m.IsActive,
+		CreatedAt:    m.CreatedAt,
+		UpdatedAt:    m.UpdatedAt,
+	}
 }

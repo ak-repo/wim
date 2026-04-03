@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/ak-repo/wim/internal/constants"
 	"github.com/ak-repo/wim/internal/http/handler"
 	wimMiddleware "github.com/ak-repo/wim/internal/http/middleware"
 	"github.com/ak-repo/wim/pkg/auth"
@@ -57,20 +58,18 @@ func SetupRoutes(handlers *handler.Handler, tokenManager auth.TokenManager) http
 }
 
 func AdminRoutes(r chi.Router, handlers *handler.Handler, tokenManager auth.TokenManager) {
-	r.Route("/admin", func(admin chi.Router) {
+	publicRoutes := r.Route("/adminPublic", func(public chi.Router) {})
+	privateRoutes := r.Route("/admin", func(private chi.Router) {
+		private.Use(wimMiddleware.RequireAuth(tokenManager))
+		private.Use(wimMiddleware.RoleBasedAccessControl(constants.RoleAdmin))
+	})
 
-		// Route for Auth
-		admin.Route("/auth", func(auth chi.Router) {
-			auth.Post("/login", handlers.Auth.Login)
-			auth.Post("/register", handlers.Auth.Register)
-		})
+	publicRoutes.Post("/login", handlers.Auth.Login)
+	publicRoutes.Post("/register", handlers.Auth.Register)
 
-		//Auth for Users
-		admin.Route("/users", func(users chi.Router) {
-			users.Use(wimMiddleware.RequireAuth(tokenManager))
-			users.Get("", handlers.User.ListUsers)
-
-		})
+	// Users Routes
+	privateRoutes.Route("/users", func(users chi.Router) {
+		users.Get("/", handlers.User.ListUsers)
 	})
 
 }

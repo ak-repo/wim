@@ -47,7 +47,7 @@ type UserRequest struct {
 // API conversion
 type UserDTOs []*UserDTO
 
-func (m *UserDTOs) ToAPIRequest() []*UserResponse {
+func (m *UserDTOs) ToAPIResponse() []*UserResponse {
 	var responses []*UserResponse
 	for _, dto := range *m {
 		responses = append(responses, dto.ToAPI())

@@ -6,8 +6,11 @@ import (
 )
 
 type Services struct {
-	User UserService
-	Auth AuthService
+	User      UserService
+	Auth      AuthService
+	Product   ProductService
+	Warehouse WarehouseService
+	Location  LocationService
 }
 
 type Dependencies struct {
@@ -18,7 +21,10 @@ type Dependencies struct {
 
 func NewServices(deps Dependencies) *Services {
 	return &Services{
-		User: NewUserService(deps.Repositories),
-		Auth: NewAuthService(deps.Repositories, deps.TokenManager, deps.PasswordHasher),
+		User:      NewUserService(deps.Repositories),
+		Auth:      NewAuthService(deps.Repositories, deps.TokenManager, deps.PasswordHasher),
+		Product:   NewProductService(deps.Repositories),
+		Warehouse: NewWarehouseService(deps.Repositories),
+		Location:  NewLocationService(deps.Repositories),
 	}
 }
