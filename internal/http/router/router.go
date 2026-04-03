@@ -18,7 +18,7 @@ func SetupRoutes(handlers *handler.Handler, tokenManager auth.TokenManager) http
 	r := chi.NewRouter()
 	r.Use(chiMiddleware.Logger)
 
-	allowedOrigins := []string{"http://localhost:5173", "http://localhost:3000"}
+	allowedOrigins := []string{"http://localhost:5174", "http://localhost:3000"}
 	if raw := strings.TrimSpace(os.Getenv("CORS_ALLOWED_ORIGINS")); raw != "" {
 		parts := strings.Split(raw, ",")
 		allowedOrigins = allowedOrigins[:0]
