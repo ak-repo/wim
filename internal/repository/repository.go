@@ -8,6 +8,7 @@ type Repositories struct {
 	Product   ProductRepository
 	Warehouse WarehouseRepository
 	Location  LocationRepository
+	RefCode   RefCodeGenerator
 }
 
 type Dependencies struct {
@@ -22,5 +23,6 @@ func NewRepositories(deps Dependencies) *Repositories {
 		Product:   NewProductRepository(deps.DB),
 		Warehouse: NewWarehouseRepository(deps.DB),
 		Location:  NewLocationRepository(deps.DB),
+		RefCode:   NewRefCodeGenerator(deps.DB, deps.Redis),
 	}
 }

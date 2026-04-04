@@ -21,7 +21,7 @@ type Dependencies struct {
 
 func NewServices(deps Dependencies) *Services {
 	return &Services{
-		User:      NewUserService(deps.Repositories),
+		User:      NewUserService(deps.Repositories, deps.PasswordHasher),
 		Auth:      NewAuthService(deps.Repositories, deps.TokenManager, deps.PasswordHasher),
 		Product:   NewProductService(deps.Repositories),
 		Warehouse: NewWarehouseService(deps.Repositories),

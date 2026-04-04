@@ -12,7 +12,6 @@ import (
 	"github.com/ak-repo/wim/internal/repository"
 	"github.com/ak-repo/wim/pkg/auth"
 	apperrors "github.com/ak-repo/wim/pkg/errors"
-	"github.com/google/uuid"
 )
 
 type AuthService interface {
@@ -36,40 +35,51 @@ func NewAuthService(repositories *repository.Repositories, tokenManager auth.Tok
 
 func (s *authService) Register(ctx context.Context, input *model.RegisterRequest) error {
 	if strings.TrimSpace(input.Username) == "" || strings.TrimSpace(input.Email) == "" || strings.TrimSpace(input.Password) == "" {
-		return apperrors.ErrInvalidInput
+		return apperrors.New(apperrors.CodeInvalidInput, "invalid input")
 	}
 	if len(strings.TrimSpace(input.Password)) < 8 || !strings.Contains(input.Email, "@") {
-		return apperrors.ErrInvalidInput
+		return apperrors.New(apperrors.CodeInvalidInput, "invalid input")
 	}
 
 	exists, err := s.repos.User.ExistsByEmail(ctx, input.Email)
 	if err != nil {
-		return apperrors.ErrCheckingFaild
+		return apperrors.Wrap(err, apperrors.CodeCheckFailed, "failed to check email availability")
 	}
 	if exists {
-		return apperrors.ErrAlreadyExists
+		return apperrors.New(apperrors.CodeAlreadyExists, "user with this email already exists")
 	}
 
 	passwordHash, err := s.passwords.Hash(ctx, input.Password)
 	if err != nil {
-		return err
+		return apperrors.Wrap(err, apperrors.CodeInternal, "failed to process password")
 	}
 
-	now := time.Now().UTC()
+	username := strings.TrimSpace(input.Username)
+	email := input.Email
+	role := constants.RoleWorker
+	isActive := true
 	user := &model.UserRequest{
-		ID:           uuid.New(),
-		Username:     strings.TrimSpace(input.Username),
-		Email:        input.Email,
-		PasswordHash: passwordHash,
-		Role:         constants.RoleWorker,
-		IsActive:     true,
-		UpdatedAt:    now,
-		CreatedAt:    now,
+		Username:     &username,
+		Email:        &email,
+		PasswordHash: &passwordHash,
+		Role:         &role,
+		IsActive:     &isActive,
 	}
 
-	if err := s.repos.User.Create(ctx, user); err != nil {
-		log.Println("error creating user", err)
+	// Refcode
+	refCode, err := s.repos.RefCode.GenerateUserRefCode(ctx)
+	if err != nil {
 		return err
+	}
+
+	user.RefCode = refCode
+	_, err = s.repos.User.Create(ctx, user)
+	if err != nil {
+		log.Println("error creating user", err)
+		if errors.Is(err, apperrors.ErrAlreadyExists) {
+			return apperrors.New(apperrors.CodeAlreadyExists, "user with this email already exists")
+		}
+		return apperrors.Wrap(err, apperrors.CodeDatabase, "failed to create user")
 	}
 
 	return nil
@@ -77,26 +87,26 @@ func (s *authService) Register(ctx context.Context, input *model.RegisterRequest
 
 func (s *authService) Login(ctx context.Context, input *model.LoginRequest) (*model.AuthResponse, error) {
 	if strings.TrimSpace(input.Email) == "" || strings.TrimSpace(input.Password) == "" {
-		return nil, apperrors.ErrInvalidInput
+		return nil, apperrors.New(apperrors.CodeInvalidInput, "invalid input")
 	}
 	if !strings.Contains(input.Email, "@") {
-		return nil, apperrors.ErrInvalidInput
+		return nil, apperrors.New(apperrors.CodeInvalidInput, "invalid input")
 	}
 
 	user, err := s.repos.User.GetByEmail(ctx, input.Email)
 	if err != nil {
 		if errors.Is(err, repository.ErrUserNotFound) {
-			return nil, apperrors.ErrUnauthorized
+			return nil, apperrors.New(apperrors.CodeUnauthorized, "invalid email or password")
 		}
-		return nil, err
+		return nil, apperrors.Wrap(err, apperrors.CodeDatabase, "failed to load user")
 	}
 
 	if !user.IsActive {
-		return nil, apperrors.ErrForbidden
+		return nil, apperrors.New(apperrors.CodeForbidden, "account is disabled")
 	}
 
-	if err := s.passwords.Compare(ctx, user.PasswordHash.String, input.Password); err != nil {
-		return nil, apperrors.ErrUnauthorized
+	if err := s.passwords.Compare(ctx, user.PasswordHash, input.Password); err != nil {
+		return nil, apperrors.New(apperrors.CodeUnauthorized, "invalid email or password")
 	}
 
 	return s.issueTokens(ctx, user)
@@ -105,20 +115,19 @@ func (s *authService) Login(ctx context.Context, input *model.LoginRequest) (*mo
 func (s *authService) issueTokens(ctx context.Context, user *model.UserDTO) (*model.AuthResponse, error) {
 	accessToken, err := s.tokenManager.IssueAccessToken(ctx, auth.Claims{
 		Subject: user.ID,
-		Role:    user.Role.String,
+		Role:    user.Role,
 	})
 	if err != nil {
-		return nil, err
+		return nil, apperrors.Wrap(err, apperrors.CodeInternal, "failed to issue access token")
 	}
 
-	refreshToken, refreshTokenTTL, err := s.tokenManager.IssueRefreshToken(ctx, auth.Claims{Subject: user.ID, Role: user.Role.String})
+	refreshToken, refreshTokenTTL, err := s.tokenManager.IssueRefreshToken(ctx, auth.Claims{Subject: user.ID, Role: user.Role})
 	if err != nil {
-		return nil, err
+		return nil, apperrors.Wrap(err, apperrors.CodeInternal, "failed to issue refresh token")
 	}
 
 	now := time.Now().UTC()
 	storedToken := &model.RefreshTokenDTO{
-		ID:        uuid.New(),
 		UserID:    user.ID,
 		TokenHash: refreshToken,
 		ExpiresAt: now.Add(refreshTokenTTL),

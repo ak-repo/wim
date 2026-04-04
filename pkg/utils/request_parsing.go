@@ -1,10 +1,45 @@
 package utils
 
 import (
+	"encoding/json"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+
+	apperrors "github.com/ak-repo/wim/pkg/errors"
+	"github.com/ak-repo/wim/pkg/response"
+	"github.com/go-chi/chi"
 )
+
+// JSON decoder
+// decodeJSON safely decodes request body
+func DecodeJSON(w http.ResponseWriter, r *http.Request, dst any) bool {
+	defer r.Body.Close()
+
+	// limit request size (1MB)
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	if err := decoder.Decode(dst); err != nil {
+		response.WriteError(w, http.StatusBadRequest, apperrors.CodeInvalidInput, "invalid request body")
+		return false
+	}
+
+	return true
+}
+
+// parseID safely parses path ID
+func ParseID(w http.ResponseWriter, r *http.Request) (int, bool) {
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil || id <= 0 {
+		response.WriteError(w, http.StatusBadRequest, apperrors.CodeInvalidInput, "invalid product id")
+		return 0, false
+	}
+	return id, true
+}
 
 // Int
 func GetInt(q url.Values, key string, def int) int {

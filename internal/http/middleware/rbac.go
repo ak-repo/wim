@@ -5,6 +5,7 @@ import (
 
 	"github.com/ak-repo/wim/internal/constants"
 	"github.com/ak-repo/wim/pkg/auth"
+	apperrors "github.com/ak-repo/wim/pkg/errors"
 	"github.com/ak-repo/wim/pkg/response"
 )
 
@@ -23,7 +24,7 @@ func RoleBasedAccessControl(role string) func(http.Handler) http.Handler {
 				return
 			}
 			if claims.Role != role {
-				response.WriteError(w, http.StatusForbidden, "you are not authorized to access this resource")
+				response.WriteError(w, http.StatusForbidden, apperrors.CodeForbidden, "you are not authorized to access this resource")
 				return
 			}
 			next.ServeHTTP(w, r)

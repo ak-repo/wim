@@ -5,8 +5,8 @@ server:
 auth:
   jwt_secret: change-me-in-production
   jwt_issuer: wim
-  access_token_ttl: 15m
-  refresh_token_ttl: 168h
+  access_token_ttl: 168h
+  refresh_token_ttl: 720h
 
 database:
   url: postgres://wim_user:wim_pass@localhost:5432/warehouse_inventory?sslmode=disable

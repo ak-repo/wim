@@ -18,7 +18,7 @@ func SetupRoutes(handlers *handler.Handler, tokenManager auth.TokenManager) http
 	r := chi.NewRouter()
 	r.Use(chiMiddleware.Logger)
 
-	allowedOrigins := []string{"http://localhost:5174", "http://localhost:3000"}
+	allowedOrigins := []string{"http://localhost:5174", "http://localhost:3050"}
 	if raw := strings.TrimSpace(os.Getenv("CORS_ALLOWED_ORIGINS")); raw != "" {
 		parts := strings.Split(raw, ",")
 		allowedOrigins = allowedOrigins[:0]
@@ -70,6 +70,37 @@ func AdminRoutes(r chi.Router, handlers *handler.Handler, tokenManager auth.Toke
 	// Users Routes
 	privateRoutes.Route("/users", func(users chi.Router) {
 		users.Get("/", handlers.User.ListUsers)
+	})
+
+	// Product Routes
+	privateRoutes.Route("/products", func(products chi.Router) {
+		products.Post("/", handlers.Product.CreateProduct)
+		products.Get("/", handlers.Product.ListProducts)
+		products.Get("/sku/{sku}", handlers.Product.GetProductBySKU)
+		products.Get("/{id}", handlers.Product.GetProductByID)
+		products.Patch("/{id}", handlers.Product.UpdateProduct)
+		products.Delete("/{id}", handlers.Product.DeleteProduct)
+	})
+
+	// location Routes
+	privateRoutes.Route("/locations", func(locations chi.Router) {
+		locations.Post("/", handlers.Location.CreateLocation)
+		locations.Get("/", handlers.Location.ListLocations)
+		locations.Get("/code/{code}", handlers.Location.GetLocationByCode)
+		locations.Get("/warehouse/{warehouseId}", handlers.Location.ListLocationsByWarehouse)
+		locations.Get("/{id}", handlers.Location.GetLocationByID)
+		locations.Patch("/{id}", handlers.Location.UpdateLocation)
+		locations.Delete("/{id}", handlers.Location.DeleteLocation)
+	})
+
+	// Warehouse Routes
+	privateRoutes.Route("/warehouses", func(warehouses chi.Router) {
+		warehouses.Post("/", handlers.Warehouse.CreateWarehouse)
+		warehouses.Get("/", handlers.Warehouse.ListWarehouses)
+		warehouses.Get("/code/{code}", handlers.Warehouse.GetWarehouseByCode)
+		warehouses.Get("/{id}", handlers.Warehouse.GetWarehouseByID)
+		warehouses.Put("/{id}", handlers.Warehouse.UpdateWarehouse)
+		warehouses.Delete("/{id}", handlers.Warehouse.DeleteWarehouse)
 	})
 
 }

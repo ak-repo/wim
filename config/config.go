@@ -94,8 +94,8 @@ func Load() *Config {
 	v.SetDefault("server.host", "0.0.0.0")
 	v.SetDefault("auth.jwt_secret", "change-me-in-production")
 	v.SetDefault("auth.jwt_issuer", "wim")
-	v.SetDefault("auth.access_token_ttl", "15m")
-	v.SetDefault("auth.refresh_token_ttl", "168h")
+	v.SetDefault("auth.access_token_ttl", "168h")
+	v.SetDefault("auth.refresh_token_ttl", "720h")
 
 	v.SetDefault("database.host", "localhost")
 	v.SetDefault("database.port", 5432)

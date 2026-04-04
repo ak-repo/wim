@@ -3,19 +3,18 @@ package repository
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/ak-repo/wim/internal/db"
 	"github.com/ak-repo/wim/internal/model"
-	"github.com/google/uuid"
+	apperrors "github.com/ak-repo/wim/pkg/errors"
 	"github.com/jackc/pgx/v5"
 )
 
 type AuthRepository interface {
 	StoreRefreshToken(ctx context.Context, token *model.RefreshTokenDTO) error
 	GetRefreshTokenByHash(ctx context.Context, tokenHash string) (*model.RefreshTokenDTO, error)
-	RevokeRefreshToken(ctx context.Context, tokenID uuid.UUID, revokedAt time.Time) error
+	RevokeRefreshToken(ctx context.Context, tokenID int, revokedAt time.Time) error
 }
 
 type authRepository struct {
@@ -27,13 +26,14 @@ func NewAuthRepository(database *db.DB) AuthRepository {
 }
 
 func (r *authRepository) StoreRefreshToken(ctx context.Context, token *model.RefreshTokenDTO) error {
-	_, err := r.db.Pool.Exec(ctx, `
+	err := r.db.Pool.QueryRow(ctx, `
 		INSERT INTO refresh_tokens (
-			id, user_id, token_hash, expires_at, revoked_at, created_at, updated_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7)
-	`, token.ID, token.UserID, token.TokenHash, token.ExpiresAt, token.RevokedAt, token.CreatedAt, token.UpdatedAt)
+			user_id, token_hash, expires_at, revoked_at, created_at, updated_at
+		) VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id
+	`, token.UserID, token.TokenHash, token.ExpiresAt, token.RevokedAt, token.CreatedAt, token.UpdatedAt).Scan(&token.ID)
 	if err != nil {
-		return fmt.Errorf("store refresh token: %w", err)
+		return apperrors.Wrap(err, apperrors.CodeDatabase, "failed to store refresh token")
 	}
 
 	return nil
@@ -57,20 +57,20 @@ func (r *authRepository) GetRefreshTokenByHash(ctx context.Context, tokenHash st
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrRefreshTokenNotFound
 		}
-		return nil, fmt.Errorf("get refresh token by hash: %w", err)
+		return nil, apperrors.Wrap(err, apperrors.CodeDatabase, "failed to load refresh token")
 	}
 
 	return &row, nil
 }
 
-func (r *authRepository) RevokeRefreshToken(ctx context.Context, tokenID uuid.UUID, revokedAt time.Time) error {
+func (r *authRepository) RevokeRefreshToken(ctx context.Context, tokenID int, revokedAt time.Time) error {
 	result, err := r.db.Pool.Exec(ctx, `
 		UPDATE refresh_tokens
 		SET revoked_at = $2, updated_at = $2
 		WHERE id = $1 AND revoked_at IS NULL
 	`, tokenID, revokedAt)
 	if err != nil {
-		return fmt.Errorf("revoke refresh token: %w", err)
+		return apperrors.Wrap(err, apperrors.CodeDatabase, "failed to revoke refresh token")
 	}
 
 	if result.RowsAffected() == 0 {

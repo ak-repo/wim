@@ -1,12 +1,12 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/ak-repo/wim/internal/model"
 	"github.com/ak-repo/wim/internal/service"
 	"github.com/ak-repo/wim/pkg/response"
+	"github.com/ak-repo/wim/pkg/utils"
 )
 
 type AuthHandler struct {
@@ -19,8 +19,7 @@ func NewAuthHandler(services *service.Services) *AuthHandler {
 
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req model.RegisterRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.WriteError(w, http.StatusBadRequest, "invalid request body")
+	if ok := utils.DecodeJSON(w, r, &req); !ok {
 		return
 	}
 
@@ -30,13 +29,14 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.WriteJSON(w, http.StatusCreated, "user registered")
+	response.WriteJSON(w, http.StatusCreated, map[string]string{
+		"message": "user registered",
+	})
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req model.LoginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.WriteError(w, http.StatusBadRequest, "invalid request body")
+	if ok := utils.DecodeJSON(w, r, &req); !ok {
 		return
 	}
 

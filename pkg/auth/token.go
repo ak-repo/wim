@@ -4,16 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 )
 
 var ErrInvalidToken = errors.New("invalid token")
 
 type Claims struct {
-	Subject uuid.UUID
+	Subject int
 	Role    string
 }
 
@@ -49,12 +49,13 @@ func NewJWTTokenManager(secretKey, issuer string, ttl time.Duration) TokenManage
 
 func (m *JWTTokenManager) IssueAccessToken(ctx context.Context, claims Claims) (string, error) {
 	now := time.Now().UTC()
+	subject := strconv.Itoa(claims.Subject)
 	jwtClaims := accessTokenClaims{
-		UserID: claims.Subject.String(),
+		UserID: subject,
 		Role:   claims.Role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    m.issuer,
-			Subject:   claims.Subject.String(),
+			Subject:   subject,
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(m.ttl)),
 		},
@@ -67,11 +68,12 @@ func (m *JWTTokenManager) IssueAccessToken(ctx context.Context, claims Claims) (
 func (m *JWTTokenManager) IssueRefreshToken(ctx context.Context, claims Claims) (string, time.Duration, error) {
 	now := time.Now().UTC()
 	refreshTime := m.ttl * 24 // 1 Day
+	subject := strconv.Itoa(claims.Subject)
 	jwtClaims := accessTokenClaims{
-		Role: string(claims.Role),
+		Role: claims.Role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    m.issuer,
-			Subject:   claims.Subject.String(),
+			Subject:   subject,
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(refreshTime)),
 		},
@@ -102,7 +104,7 @@ func (m *JWTTokenManager) ParseJWTToken(ctx context.Context, token string) (Clai
 		return Claims{}, ErrInvalidToken
 	}
 
-	userID, err := uuid.Parse(claims.Subject)
+	userID, err := strconv.Atoi(claims.Subject)
 	if err != nil {
 		return Claims{}, fmt.Errorf("parse access token subject: %w", ErrInvalidToken)
 	}

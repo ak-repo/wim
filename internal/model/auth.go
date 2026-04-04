@@ -3,8 +3,6 @@ package model
 import (
 	"database/sql"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type RegisterRequest struct {
@@ -21,13 +19,13 @@ type LoginRequest struct {
 }
 
 type RefreshTokenRequest struct {
-	UserID    uuid.UUID    `db:"user_id"`
-	TokenHash string       `db:"token_hash"`
-	ExpiresAt time.Time    `db:"expires_at"`
-	RevokedAt sql.NullTime `db:"revoked_at"`
-	CreatedAt time.Time    `db:"created_at"`
-	UpdatedAt time.Time    `db:"updated_at"`
-	RefreshToken string `json:"refreshToken"`
+	UserID       int          `db:"user_id"`
+	TokenHash    string       `db:"token_hash"`
+	ExpiresAt    time.Time    `db:"expires_at"`
+	RevokedAt    sql.NullTime `db:"revoked_at"`
+	CreatedAt    time.Time    `db:"created_at"`
+	UpdatedAt    time.Time    `db:"updated_at"`
+	RefreshToken string       `json:"refreshToken"`
 }
 
 type AuthResponse struct {
@@ -36,8 +34,8 @@ type AuthResponse struct {
 }
 
 type RefreshTokenDTO struct {
-	ID        uuid.UUID    `db:"id"`
-	UserID    uuid.UUID    `db:"user_id"`
+	ID        int          `db:"id"`
+	UserID    int          `db:"user_id"`
 	TokenHash string       `db:"token_hash"`
 	ExpiresAt time.Time    `db:"expires_at"`
 	RevokedAt sql.NullTime `db:"revoked_at"`

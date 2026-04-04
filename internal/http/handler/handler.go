@@ -3,15 +3,21 @@ package handler
 import "github.com/ak-repo/wim/internal/service"
 
 type Handler struct {
-	Auth   *AuthHandler
-	Health *HealthHandler
-	User   *UserHandler
+	Auth      *AuthHandler
+	Health    *HealthHandler
+	User      *UserHandler
+	Product   *ProductHandler
+	Warehouse *WarehouseHandler
+	Location  *LocationHandler
 }
 
 func NewHandlers(services *service.Services) *Handler {
 	return &Handler{
-		Auth:   NewAuthHandler(services),
-		Health: NewHealthHandler(),
-		User:   NewUserHandler(services),
+		Auth:      NewAuthHandler(services),
+		Health:    NewHealthHandler(),
+		User:      NewUserHandler(services),
+		Product:   NewProductHandler(services),
+		Warehouse: NewWarehouseHandler(services),
+		Location:  NewLocationHandler(services),
 	}
 }

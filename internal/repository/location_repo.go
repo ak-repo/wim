@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"strings"
@@ -9,7 +10,6 @@ import (
 	"github.com/ak-repo/wim/internal/db"
 	"github.com/ak-repo/wim/internal/model"
 	apperrors "github.com/ak-repo/wim/pkg/errors"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -17,15 +17,15 @@ import (
 var ErrLocationNotFound = errors.New("location not found")
 
 type LocationRepository interface {
-	Create(ctx context.Context, location *model.CreateLocationRequest) (uuid.UUID, error)
-	GetByID(ctx context.Context, locationID uuid.UUID) (*model.LocationDTO, error)
+	Create(ctx context.Context, location *model.LocationRequest) (int, error)
+	GetByID(ctx context.Context, locationID int) (*model.LocationDTO, error)
 	GetByCode(ctx context.Context, code string) (*model.LocationDTO, error)
 	ExistsByCode(ctx context.Context, code string) (bool, error)
-	Update(ctx context.Context, locationID uuid.UUID, location *model.UpdateLocationRequest) error
-	Delete(ctx context.Context, locationID uuid.UUID) error
+	Update(ctx context.Context, locationID int, location *model.LocationRequest) error
+	Delete(ctx context.Context, locationID int) error
 	List(ctx context.Context, params *model.LocationParams) (model.LocationDTOs, error)
 	Count(ctx context.Context, params *model.LocationParams) (int, error)
-	ListByWarehouse(ctx context.Context, warehouseID uuid.UUID) (model.LocationDTOs, error)
+	ListByWarehouse(ctx context.Context, warehouseID int) (model.LocationDTOs, error)
 }
 
 type locationRepository struct {
@@ -33,77 +33,89 @@ type locationRepository struct {
 }
 
 func NewLocationRepository(database *db.DB) LocationRepository {
-	return &locationRepository{db: database}
+	return &locationRepository{
+		db: database,
+	}
 }
 
-func (r *locationRepository) Create(ctx context.Context, location *model.CreateLocationRequest) (uuid.UUID, error) {
+func (r *locationRepository) Create(ctx context.Context, location *model.LocationRequest) (int, error) {
+	var warehouseCode string
+	err := r.db.Pool.QueryRow(ctx, `
+		SELECT code FROM warehouses WHERE id = $1
+	`, location.WarehouseID).Scan(&warehouseCode)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return 0, ErrWarehouseNotFound
+		}
+		return 0, apperrors.Wrap(err, apperrors.CodeDatabase, "failed to lookup warehouse")
+	}
+
 	query := `
 		INSERT INTO locations (
-			id, warehouse_id, zone, aisle, rack, bin, location_code, location_type, is_pick_face, max_weight, is_active, created_at, updated_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true, NOW(), NOW())
+			 ref_code, warehouse_id, zone, aisle, rack, bin, location_code, location_type, is_pick_face, max_weight, is_active, created_at, updated_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
 		RETURNING id
 	`
 
-	id := uuid.New()
-	_, err := r.db.Pool.Exec(ctx, query,
-		id, location.WarehouseID, location.Zone, location.Aisle, location.Rack,
-		location.Bin, location.LocationCode, location.LocationType, location.IsPickFace, location.MaxWeight,
-	)
+	var id int
+	err = r.db.Pool.QueryRow(ctx, query,
+		location.RefCode,
+		location.WarehouseID,
+		location.Zone,
+		location.Aisle,
+		location.Rack,
+		location.Bin,
+		location.LocationCode,
+		location.LocationType,
+		location.IsPickFace,
+		location.MaxWeight,
+		location.IsActive,
+	).Scan(&id)
 
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			return uuid.Nil, apperrors.ErrAlreadyExists
+			return 0, apperrors.ErrAlreadyExists
 		}
-		return uuid.Nil, fmt.Errorf("failed to create location: %w", err)
+		return 0, apperrors.Wrap(err, apperrors.CodeDatabase, "failed to create location")
 	}
 
 	return id, nil
 }
 
-func (r *locationRepository) GetByID(ctx context.Context, locationID uuid.UUID) (*model.LocationDTO, error) {
-	row, err := scanLocation(ctx, r.db, `
-		SELECT id, warehouse_id, zone, aisle, rack, bin, location_code, location_type, is_pick_face, max_weight, is_active, created_at, updated_at
+func (r *locationRepository) GetByID(ctx context.Context, locationID int) (*model.LocationDTO, error) {
+	return scanLocation(ctx, r.db, `
+		SELECT id, ref_code, warehouse_id, zone, aisle, rack, bin, location_code, location_type, is_pick_face, max_weight, is_active, created_at, updated_at, deleted_at
 		FROM locations WHERE id = $1
 	`, locationID)
-	if err != nil {
-		return nil, err
-	}
-
-	return row, nil
 }
 
 func (r *locationRepository) GetByCode(ctx context.Context, code string) (*model.LocationDTO, error) {
-	row, err := scanLocation(ctx, r.db, `
-		SELECT id, warehouse_id, zone, aisle, rack, bin, location_code, location_type, is_pick_face, max_weight, is_active, created_at, updated_at
+	return scanLocation(ctx, r.db, `
+		SELECT id, ref_code, warehouse_id, zone, aisle, rack, bin, location_code, location_type, is_pick_face, max_weight, is_active, created_at, updated_at, deleted_at
 		FROM locations WHERE location_code = $1
 	`, code)
-	if err != nil {
-		return nil, err
-	}
-
-	return row, nil
 }
 
 func (r *locationRepository) ExistsByCode(ctx context.Context, code string) (bool, error) {
 	var exists bool
 	err := r.db.Pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM locations WHERE location_code = $1)`, code).Scan(&exists)
 	if err != nil {
-		return false, fmt.Errorf("check location by code: %w", err)
+		return false, apperrors.Wrap(err, apperrors.CodeDatabase, "failed to check location by code")
 	}
 
 	return exists, nil
 }
 
-func (r *locationRepository) Update(ctx context.Context, locationID uuid.UUID, location *model.UpdateLocationRequest) error {
+func (r *locationRepository) Update(ctx context.Context, locationID int, location *model.LocationRequest) error {
 	query := `
 		UPDATE locations
-		SET zone = COALESCE(NULLIF($2, ''), zone),
-			aisle = COALESCE(NULLIF($3, ''), aisle),
-			rack = COALESCE(NULLIF($4, ''), rack),
-			bin = COALESCE(NULLIF($5, ''), bin),
-			location_code = COALESCE(NULLIF($6, ''), location_code),
-			location_type = COALESCE(NULLIF($7, ''), location_type),
+		SET zone = COALESCE($2, zone),
+			aisle = COALESCE($3, aisle),
+			rack = COALESCE($4, rack),
+			bin = COALESCE($5, bin),
+			location_code = COALESCE($6, location_code),
+			location_type = COALESCE($7, location_type),
 			is_pick_face = COALESCE($8, is_pick_face),
 			max_weight = COALESCE($9, max_weight),
 			is_active = COALESCE($10, is_active),
@@ -124,7 +136,7 @@ func (r *locationRepository) Update(ctx context.Context, locationID uuid.UUID, l
 		location.IsActive,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to update location: %w", err)
+		return apperrors.Wrap(err, apperrors.CodeDatabase, "failed to update location")
 	}
 
 	if result.RowsAffected() == 0 {
@@ -134,10 +146,10 @@ func (r *locationRepository) Update(ctx context.Context, locationID uuid.UUID, l
 	return nil
 }
 
-func (r *locationRepository) Delete(ctx context.Context, locationID uuid.UUID) error {
+func (r *locationRepository) Delete(ctx context.Context, locationID int) error {
 	result, err := r.db.Pool.Exec(ctx, `DELETE FROM locations WHERE id = $1`, locationID)
 	if err != nil {
-		return fmt.Errorf("failed to delete location: %w", err)
+		return apperrors.Wrap(err, apperrors.CodeDatabase, "failed to delete location")
 	}
 
 	if result.RowsAffected() == 0 {
@@ -149,8 +161,12 @@ func (r *locationRepository) Delete(ctx context.Context, locationID uuid.UUID) e
 
 func scanLocation(ctx context.Context, database *db.DB, query string, args ...any) (*model.LocationDTO, error) {
 	var row model.LocationDTO
+	var isActive, isPickFace sql.NullBool
+	var createdAt, updatedAt, deletedAt sql.NullTime
+
 	err := database.Pool.QueryRow(ctx, query, args...).Scan(
 		&row.ID,
+		&row.RefCode,
 		&row.WarehouseID,
 		&row.Zone,
 		&row.Aisle,
@@ -158,27 +174,35 @@ func scanLocation(ctx context.Context, database *db.DB, query string, args ...an
 		&row.Bin,
 		&row.LocationCode,
 		&row.LocationType,
-		&row.IsPickFace,
+		&isPickFace,
 		&row.MaxWeight,
-		&row.IsActive,
-		&row.CreatedAt,
-		&row.UpdatedAt,
+		&isActive,
+		&createdAt,
+		&updatedAt,
+		&deletedAt,
 	)
+	if err == nil {
+		row.ApplyNullScalars(isActive, isPickFace, createdAt, updatedAt, deletedAt)
+	}
+
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &model.LocationDTO{}, ErrLocationNotFound
+			return nil, ErrLocationNotFound
 		}
-		return &model.LocationDTO{}, fmt.Errorf("scan location: %w", err)
+		return nil, apperrors.Wrap(err, apperrors.CodeDatabase, "failed to load location")
 	}
 
 	return &row, nil
 }
 
 func (r *locationRepository) List(ctx context.Context, params *model.LocationParams) (model.LocationDTOs, error) {
-	args := []interface{}{}
-	conditions := []string{}
+	var (
+		args       []any
+		conditions []string
+	)
+
 	query := `
-		SELECT id, warehouse_id, zone, aisle, rack, bin, location_code, location_type, is_pick_face, max_weight, is_active, created_at, updated_at
+		SELECT id, ref_code, warehouse_id, zone, aisle, rack, bin, location_code, location_type, is_pick_face, max_weight, is_active, created_at, updated_at, deleted_at
 		FROM locations
 	`
 
@@ -189,7 +213,7 @@ func (r *locationRepository) List(ctx context.Context, params *model.LocationPar
 	}
 
 	// Warehouse filter
-	if params.WarehouseID != uuid.Nil {
+	if params.WarehouseID != 0 {
 		conditions = append(conditions, fmt.Sprintf("warehouse_id = $%d", len(args)+1))
 		args = append(args, params.WarehouseID)
 	}
@@ -212,18 +236,13 @@ func (r *locationRepository) List(ctx context.Context, params *model.LocationPar
 	)
 	args = append(args, params.Limit, offset)
 
-	rows, err := scanLocations(ctx, r.db, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("list locations: %w", err)
-	}
-
-	return rows, nil
+	return scanLocations(ctx, r.db, query, args...)
 }
 
 func (r *locationRepository) Count(ctx context.Context, params *model.LocationParams) (int, error) {
 	var count int
-	args := []interface{}{}
-	conditions := []string{}
+	var args []any
+	var conditions []string
 
 	query := `SELECT COUNT(*) FROM locations`
 
@@ -234,7 +253,7 @@ func (r *locationRepository) Count(ctx context.Context, params *model.LocationPa
 	}
 
 	// Warehouse filter
-	if params.WarehouseID != uuid.Nil {
+	if params.WarehouseID != 0 {
 		conditions = append(conditions, fmt.Sprintf("warehouse_id = $%d", len(args)+1))
 		args = append(args, params.WarehouseID)
 	}
@@ -252,37 +271,37 @@ func (r *locationRepository) Count(ctx context.Context, params *model.LocationPa
 
 	err := r.db.Pool.QueryRow(ctx, query, args...).Scan(&count)
 	if err != nil {
-		return 0, fmt.Errorf("count locations: %w", err)
+		return 0, apperrors.Wrap(err, apperrors.CodeDatabase, "failed to count locations")
 	}
 
 	return count, nil
 }
 
-func (r *locationRepository) ListByWarehouse(ctx context.Context, warehouseID uuid.UUID) (model.LocationDTOs, error) {
+func (r *locationRepository) ListByWarehouse(ctx context.Context, warehouseID int) (model.LocationDTOs, error) {
 	query := `
-		SELECT id, warehouse_id, zone, aisle, rack, bin, location_code, location_type, is_pick_face, max_weight, is_active, created_at, updated_at
+		SELECT id, ref_code, warehouse_id, zone, aisle, rack, bin, location_code, location_type, is_pick_face, max_weight, is_active, created_at, updated_at, deleted_at
 		FROM locations WHERE warehouse_id = $1
 		ORDER BY zone, aisle, rack, bin
 	`
-	rows, err := scanLocations(ctx, r.db, query, warehouseID)
-	if err != nil {
-		return nil, fmt.Errorf("list locations by warehouse: %w", err)
-	}
-	return rows, nil
+	return scanLocations(ctx, r.db, query, warehouseID)
 }
 
 func scanLocations(ctx context.Context, database *db.DB, query string, args ...any) (model.LocationDTOs, error) {
 	rows, err := database.Pool.Query(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("scan locations: %w", err)
+		return nil, apperrors.Wrap(err, apperrors.CodeDatabase, "failed to query locations")
 	}
 	defer rows.Close()
 
 	var locations model.LocationDTOs
 	for rows.Next() {
 		var row model.LocationDTO
-		if err := rows.Scan(
+		var isActive, isPickFace sql.NullBool
+		var createdAt, updatedAt, deletedAt sql.NullTime
+
+		err := rows.Scan(
 			&row.ID,
+			&row.RefCode,
 			&row.WarehouseID,
 			&row.Zone,
 			&row.Aisle,
@@ -290,19 +309,22 @@ func scanLocations(ctx context.Context, database *db.DB, query string, args ...a
 			&row.Bin,
 			&row.LocationCode,
 			&row.LocationType,
-			&row.IsPickFace,
+			&isPickFace,
 			&row.MaxWeight,
-			&row.IsActive,
-			&row.CreatedAt,
-			&row.UpdatedAt,
-		); err != nil {
-			return nil, fmt.Errorf("scan location row: %w", err)
+			&isActive,
+			&createdAt,
+			&updatedAt,
+			&deletedAt,
+		)
+		if err != nil {
+			return nil, apperrors.Wrap(err, apperrors.CodeDatabase, "failed to scan location row")
 		}
+		row.ApplyNullScalars(isActive, isPickFace, createdAt, updatedAt, deletedAt)
 		locations = append(locations, &row)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterate location rows: %w", err)
+		return nil, apperrors.Wrap(err, apperrors.CodeDatabase, "failed to iterate locations")
 	}
 
 	return locations, nil
