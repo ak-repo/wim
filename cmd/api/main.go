@@ -48,8 +48,19 @@ func main() {
 	passwordHasher := auth.NewBcryptPasswordHasher(bcrypt.DefaultCost)
 	tokenManager := auth.NewJWTTokenManager(cfg.Auth.JWTSecret, cfg.Auth.JWTIssuer, cfg.Auth.AccessTokenTTL)
 
-	// Initialize event publisher (using mock for now, can be replaced with Kafka)
-	eventPublisher := event.NewMockPublisher()
+	// Initialize event publisher (Kafka if configured, otherwise mock)
+	var eventPublisher event.EventPublisher
+	if len(cfg.Kafka.Brokers) > 0 {
+		var err error
+		eventPublisher, err = event.InitKafka(cfg.Kafka)
+		if err != nil {
+			log.Printf("Failed to initialize Kafka producer, falling back to mock: %v", err)
+			eventPublisher = event.NewMockPublisher()
+		}
+	} else {
+		eventPublisher = event.NewMockPublisher()
+	}
+	defer eventPublisher.Close()
 
 	services := service.NewServices(service.Dependencies{
 		Repositories:   repos,

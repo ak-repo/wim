@@ -72,6 +72,28 @@ type KafkaConfig struct {
 	Brokers []string
 	Topic   string
 	GroupID string
+	// Producer settings
+	ProducerAsync bool
+	BatchSize     int
+	BatchTimeout  time.Duration
+	RequiredAcks  int    // 0, 1, -1 (all)
+	Compression   string // "none", "gzip", "snappy", "lz4"
+	Idempotent    bool
+	// Consumer settings
+	MinBytes       int
+	MaxBytes       int
+	MaxWait        time.Duration
+	AutoCommit     bool
+	CommitInterval time.Duration
+	// Security settings
+	EnableSASL    bool
+	SASLMechanism string
+	SASLUsername  string
+	SASLPassword  string
+	EnableTLS     bool
+	TLSCAFile     string
+	TLSCertFile   string
+	TLSKeyFile    string
 }
 
 type WorkerConfig struct {
@@ -114,6 +136,20 @@ func Load() *Config {
 	v.SetDefault("worker.retry_count", 3)
 	v.SetDefault("worker.retry_delay", "1s")
 	v.SetDefault("worker.batch_size", 10)
+
+	v.SetDefault("kafka.batch_size", 100)
+	v.SetDefault("kafka.batch_timeout", "100ms")
+	v.SetDefault("kafka.required_acks", 1)
+	v.SetDefault("kafka.compression", "snappy")
+	v.SetDefault("kafka.idempotent", true)
+	v.SetDefault("kafka.min_bytes", 1024)
+	v.SetDefault("kafka.max_bytes", 10485760) // 10MB
+	v.SetDefault("kafka.max_wait", "500ms")
+	v.SetDefault("kafka.auto_commit", false)
+	v.SetDefault("kafka.commit_interval", "5s")
+	v.SetDefault("kafka.enable_sasl", false)
+	v.SetDefault("kafka.sasl_mechanism", "plain")
+	v.SetDefault("kafka.enable_tls", false)
 
 	_ = v.ReadInConfig()
 
@@ -158,9 +194,28 @@ func Load() *Config {
 			DB:       v.GetInt("redis.db"),
 		},
 		Kafka: KafkaConfig{
-			Brokers: v.GetStringSlice("kafka.brokers"),
-			Topic:   v.GetString("kafka.topic"),
-			GroupID: v.GetString("kafka.group_id"),
+			Brokers:        v.GetStringSlice("kafka.brokers"),
+			Topic:          v.GetString("kafka.topic"),
+			GroupID:        v.GetString("kafka.group_id"),
+			ProducerAsync:  v.GetBool("kafka.producer_async"),
+			BatchSize:      v.GetInt("kafka.batch_size"),
+			BatchTimeout:   v.GetDuration("kafka.batch_timeout"),
+			RequiredAcks:   v.GetInt("kafka.required_acks"),
+			Compression:    v.GetString("kafka.compression"),
+			Idempotent:     v.GetBool("kafka.idempotent"),
+			MinBytes:       v.GetInt("kafka.min_bytes"),
+			MaxBytes:       v.GetInt("kafka.max_bytes"),
+			MaxWait:        v.GetDuration("kafka.max_wait"),
+			AutoCommit:     v.GetBool("kafka.auto_commit"),
+			CommitInterval: v.GetDuration("kafka.commit_interval"),
+			EnableSASL:     v.GetBool("kafka.enable_sasl"),
+			SASLMechanism:  v.GetString("kafka.sasl_mechanism"),
+			SASLUsername:   v.GetString("kafka.sasl_username"),
+			SASLPassword:   v.GetString("kafka.sasl_password"),
+			EnableTLS:      v.GetBool("kafka.enable_tls"),
+			TLSCAFile:      v.GetString("kafka.tls_ca_file"),
+			TLSCertFile:    v.GetString("kafka.tls_cert_file"),
+			TLSKeyFile:     v.GetString("kafka.tls_key_file"),
 		},
 		Worker: WorkerConfig{
 			PoolSize:   v.GetInt("worker.pool_size"),

@@ -8,10 +8,14 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
+// KafkaPublisher is deprecated. Use Producer instead for production-grade features.
+// This basic implementation is kept for backwards compatibility.
 type KafkaPublisher struct {
 	writer *kafka.Writer
 }
 
+// NewKafkaPublisher creates a basic Kafka publisher.
+// Deprecated: Use NewProducerFromConfig or NewProducer for production use.
 func NewKafkaPublisher(brokers []string, topic string) *KafkaPublisher {
 	return &KafkaPublisher{
 		writer: &kafka.Writer{
