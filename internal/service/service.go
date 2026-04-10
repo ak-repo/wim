@@ -11,6 +11,7 @@ type Services struct {
 	Product   ProductService
 	Warehouse WarehouseService
 	Location  LocationService
+	Inventory InventoryService
 }
 
 type Dependencies struct {
@@ -26,5 +27,6 @@ func NewServices(deps Dependencies) *Services {
 		Product:   NewProductService(deps.Repositories),
 		Warehouse: NewWarehouseService(deps.Repositories),
 		Location:  NewLocationService(deps.Repositories),
+		Inventory: NewInventoryService(deps.Repositories),
 	}
 }

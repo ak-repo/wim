@@ -9,6 +9,7 @@ type Handler struct {
 	Product   *ProductHandler
 	Warehouse *WarehouseHandler
 	Location  *LocationHandler
+	Inventory *InventoryHandler
 }
 
 func NewHandlers(services *service.Services) *Handler {
@@ -19,5 +20,6 @@ func NewHandlers(services *service.Services) *Handler {
 		Product:   NewProductHandler(services),
 		Warehouse: NewWarehouseHandler(services),
 		Location:  NewLocationHandler(services),
+		Inventory: NewInventoryHandler(services),
 	}
 }

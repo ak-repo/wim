@@ -42,7 +42,8 @@ CREATE TABLE IF NOT EXISTS products (
     barcode VARCHAR(50),
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS warehouses (
@@ -58,7 +59,8 @@ CREATE TABLE IF NOT EXISTS warehouses (
     country VARCHAR(2) NOT NULL DEFAULT 'US',
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS locations (
@@ -76,7 +78,37 @@ CREATE TABLE IF NOT EXISTS locations (
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL,
     UNIQUE(warehouse_id, location_code)
+);
+
+CREATE TABLE IF NOT EXISTS inventories (
+    id BIGSERIAL PRIMARY KEY,
+    product_id BIGINT NOT NULL REFERENCES products(id),
+    warehouse_id BIGINT NOT NULL REFERENCES warehouses(id),
+    location_id BIGINT NOT NULL REFERENCES locations(id),
+    batch_id BIGINT,
+    quantity INT NOT NULL,
+    reserved_qty INT NOT NULL DEFAULT 0,
+    version INT NOT NULL DEFAULT 1,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS stock_movements (
+    id BIGSERIAL PRIMARY KEY,
+    movement_type VARCHAR(30) NOT NULL,
+    product_id BIGINT NOT NULL REFERENCES products(id),
+    warehouse_id BIGINT NOT NULL REFERENCES warehouses(id),
+    location_id_from BIGINT REFERENCES locations(id),
+    location_id_to BIGINT REFERENCES locations(id),
+    batch_id BIGINT,
+    quantity INT NOT NULL,
+    reference_type VARCHAR(50),
+    reference_id BIGINT,
+    performed_by BIGINT REFERENCES users(id),
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 
@@ -88,6 +120,16 @@ CREATE INDEX IF NOT EXISTS idx_locations_warehouse ON locations(warehouse_id);
 CREATE INDEX IF NOT EXISTS idx_locations_code ON locations(location_code);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_inventories_key
+    ON inventories (product_id, warehouse_id, location_id, COALESCE(batch_id, 0));
+CREATE INDEX IF NOT EXISTS idx_inventories_product ON inventories(product_id);
+CREATE INDEX IF NOT EXISTS idx_inventories_warehouse ON inventories(warehouse_id);
+CREATE INDEX IF NOT EXISTS idx_inventories_location ON inventories(location_id);
+
+CREATE INDEX IF NOT EXISTS idx_stock_movements_type ON stock_movements(movement_type);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_product ON stock_movements(product_id);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_warehouse ON stock_movements(warehouse_id);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_created ON stock_movements(created_at);
 
 
 -- +goose Down
@@ -104,3 +146,16 @@ DROP TABLE IF EXISTS warehouses CASCADE;
 DROP TABLE IF EXISTS products CASCADE;
 DROP TABLE IF EXISTS refresh_tokens CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+
+DROP INDEX IF EXISTS idx_stock_movements_created;
+DROP INDEX IF EXISTS idx_stock_movements_warehouse;
+DROP INDEX IF EXISTS idx_stock_movements_product;
+DROP INDEX IF EXISTS idx_stock_movements_type;
+
+DROP INDEX IF EXISTS idx_inventories_location;
+DROP INDEX IF EXISTS idx_inventories_warehouse;
+DROP INDEX IF EXISTS idx_inventories_product;
+DROP INDEX IF EXISTS idx_inventories_key;
+
+DROP TABLE IF EXISTS stock_movements;
+DROP TABLE IF EXISTS inventories;

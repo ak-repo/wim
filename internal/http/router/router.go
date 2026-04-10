@@ -103,4 +103,16 @@ func AdminRoutes(r chi.Router, handlers *handler.Handler, tokenManager auth.Toke
 		warehouses.Delete("/{id}", handlers.Warehouse.DeleteWarehouse)
 	})
 
+	// Inventory Routes
+	privateRoutes.Route("/inventory", func(inventory chi.Router) {
+		inventory.Post("/adjust", handlers.Inventory.AdjustInventory)
+		inventory.Get("/", handlers.Inventory.ListInventory)
+		inventory.Get("/{id}", handlers.Inventory.GetInventoryByID)
+	})
+
+	// Stock Movement Routes
+	privateRoutes.Route("/stock-movements", func(movements chi.Router) {
+		movements.Get("/", handlers.Inventory.ListStockMovements)
+	})
+
 }

@@ -6,6 +6,7 @@ import {
   Package,
   Warehouse,
   MapPin,
+  Database,
   Menu,
   X,
   LogOut,
@@ -26,6 +27,7 @@ const navigation: SidebarItem[] = [
   { name: "Products", href: "/products", icon: Package },
   { name: "Warehouses", href: "/warehouses", icon: Warehouse },
   { name: "Locations", href: "/locations", icon: MapPin },
+  { name: "Inventory", href: "/inventory", icon: Database },
 ]
 
 const Sidebar: React.FC<{

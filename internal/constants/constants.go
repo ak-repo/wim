@@ -5,4 +5,7 @@ const (
 	RoleAdmin      = "admin"
 	RoleManager    = "manager"
 	RoleWorker     = "worker"
+
+	MovementAdjustment        = "ADJUSTMENT"
+	ReferenceManualAdjustment = "MANUAL_ADJUSTMENT"
 )

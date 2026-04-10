@@ -10,6 +10,7 @@ import UsersPage from "@/pages/Users"
 import ProductsPage from "@/pages/Products"
 import WarehousesPage from "@/pages/Warehouses"
 import LocationsPage from "@/pages/Locations"
+import InventoryPage from "@/pages/Inventory"
 
 // Protected Route wrapper
 function ProtectedRoute() {
@@ -77,6 +78,10 @@ export const router = createBrowserRouter([
           {
             path: "/locations",
             element: <LocationsPage />,
+          },
+          {
+            path: "/inventory",
+            element: <InventoryPage />,
           },
         ],
       },
