@@ -18,6 +18,7 @@ type RefCodeGenerator interface {
 	GenerateProductRefCode(ctx context.Context) (string, error)
 	GenerateWarehouseRefCode(ctx context.Context) (string, error)
 	GenerateLocationRefCode(ctx context.Context) (string, error)
+	GenerateSalesOrderRefCode(ctx context.Context) (string, error)
 }
 
 type refCodeGenerator struct {
@@ -43,6 +44,10 @@ func (r *refCodeGenerator) GenerateWarehouseRefCode(ctx context.Context) (string
 
 func (r *refCodeGenerator) GenerateLocationRefCode(ctx context.Context) (string, error) {
 	return r.GenerateRefCode(ctx, "LOC", "locations", "ref_code")
+}
+
+func (r *refCodeGenerator) GenerateSalesOrderRefCode(ctx context.Context) (string, error) {
+	return r.GenerateRefCode(ctx, "SO", "sales_orders", "ref_code")
 }
 
 func (r *refCodeGenerator) GenerateRefCode(ctx context.Context, prefix string, tableName string, columnName string) (string, error) {

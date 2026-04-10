@@ -11,6 +11,7 @@ import {
   X,
   LogOut,
   ChevronLeft,
+  ShoppingCart,
 } from "lucide-react"
 import { cn } from "@/utils"
 import { useLogout } from "@/features/auth/hooks"
@@ -28,6 +29,7 @@ const navigation: SidebarItem[] = [
   { name: "Warehouses", href: "/warehouses", icon: Warehouse },
   { name: "Locations", href: "/locations", icon: MapPin },
   { name: "Inventory", href: "/inventory", icon: Database },
+  { name: "Sales Orders", href: "/sales-orders", icon: ShoppingCart },
 ]
 
 const Sidebar: React.FC<{

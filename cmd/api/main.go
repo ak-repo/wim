@@ -12,6 +12,7 @@ import (
 
 	"github.com/ak-repo/wim/config"
 	"github.com/ak-repo/wim/internal/db"
+	"github.com/ak-repo/wim/internal/event"
 	"github.com/ak-repo/wim/internal/http/handler"
 	"github.com/ak-repo/wim/internal/http/router"
 	"github.com/ak-repo/wim/internal/repository"
@@ -47,10 +48,14 @@ func main() {
 	passwordHasher := auth.NewBcryptPasswordHasher(bcrypt.DefaultCost)
 	tokenManager := auth.NewJWTTokenManager(cfg.Auth.JWTSecret, cfg.Auth.JWTIssuer, cfg.Auth.AccessTokenTTL)
 
+	// Initialize event publisher (using mock for now, can be replaced with Kafka)
+	eventPublisher := event.NewMockPublisher()
+
 	services := service.NewServices(service.Dependencies{
 		Repositories:   repos,
 		PasswordHasher: passwordHasher,
 		TokenManager:   tokenManager,
+		EventPublisher: eventPublisher,
 	})
 
 	handlers := handler.NewHandlers(services)

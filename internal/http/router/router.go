@@ -115,4 +115,17 @@ func AdminRoutes(r chi.Router, handlers *handler.Handler, tokenManager auth.Toke
 		movements.Get("/", handlers.Inventory.ListStockMovements)
 	})
 
+	// Sales Order Routes
+	privateRoutes.Route("/sales-orders", func(orders chi.Router) {
+		orders.Post("/", handlers.SalesOrder.CreateSalesOrder)
+		orders.Get("/", handlers.SalesOrder.ListSalesOrders)
+		orders.Get("/ref", handlers.SalesOrder.GetSalesOrderByRefCode)
+		orders.Get("/{id}", handlers.SalesOrder.GetSalesOrderByID)
+		orders.Put("/{id}", handlers.SalesOrder.UpdateSalesOrder)
+		orders.Patch("/{id}/cancel", handlers.SalesOrder.CancelSalesOrder)
+		orders.Patch("/{id}/allocate", handlers.SalesOrder.AllocateSalesOrder)
+		orders.Patch("/{id}/deallocate", handlers.SalesOrder.DeallocateSalesOrder)
+		orders.Patch("/{id}/ship", handlers.SalesOrder.ShipSalesOrder)
+	})
+
 }

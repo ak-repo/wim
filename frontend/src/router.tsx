@@ -11,6 +11,7 @@ import ProductsPage from "@/pages/Products"
 import WarehousesPage from "@/pages/Warehouses"
 import LocationsPage from "@/pages/Locations"
 import InventoryPage from "@/pages/Inventory"
+import SalesOrdersPage from "@/pages/SalesOrders"
 
 // Protected Route wrapper
 function ProtectedRoute() {
@@ -82,6 +83,10 @@ export const router = createBrowserRouter([
           {
             path: "/inventory",
             element: <InventoryPage />,
+          },
+          {
+            path: "/sales-orders",
+            element: <SalesOrdersPage />,
           },
         ],
       },

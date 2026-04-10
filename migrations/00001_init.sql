@@ -112,6 +112,40 @@ CREATE TABLE IF NOT EXISTS stock_movements (
 );
 
 
+CREATE TABLE IF NOT EXISTS sales_orders (
+    id BIGSERIAL PRIMARY KEY,
+    ref_code TEXT UNIQUE NOT NULL,
+    customer_id BIGINT NOT NULL,
+    warehouse_id BIGINT NOT NULL REFERENCES warehouses(id),
+    status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+    allocation_status VARCHAR(30) NOT NULL DEFAULT 'UNALLOCATED',
+    order_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    required_date TIMESTAMP WITH TIME ZONE,
+    shipped_date TIMESTAMP WITH TIME ZONE,
+    shipping_method VARCHAR(50),
+    shipping_address TEXT,
+    billing_address TEXT,
+    notes TEXT,
+    created_by BIGINT REFERENCES users(id),
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS sales_order_items (
+    id BIGSERIAL PRIMARY KEY,
+    sales_order_id BIGINT NOT NULL REFERENCES sales_orders(id) ON DELETE CASCADE,
+    product_id BIGINT NOT NULL REFERENCES products(id),
+    quantity_ordered INT NOT NULL,
+    quantity_shipped INT NOT NULL DEFAULT 0,
+    quantity_reserved INT NOT NULL DEFAULT 0,
+    unit_price DECIMAL(12, 4),
+    allocation_status VARCHAR(30) NOT NULL DEFAULT 'UNALLOCATED',
+    batch_id BIGINT,
+    allocated_location_id BIGINT REFERENCES locations(id),
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
 CREATE INDEX IF NOT EXISTS idx_products_sku ON products(sku);
 CREATE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode);
 CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
@@ -130,6 +164,14 @@ CREATE INDEX IF NOT EXISTS idx_stock_movements_type ON stock_movements(movement_
 CREATE INDEX IF NOT EXISTS idx_stock_movements_product ON stock_movements(product_id);
 CREATE INDEX IF NOT EXISTS idx_stock_movements_warehouse ON stock_movements(warehouse_id);
 CREATE INDEX IF NOT EXISTS idx_stock_movements_created ON stock_movements(created_at);
+
+CREATE INDEX IF NOT EXISTS idx_sales_orders_customer ON sales_orders(customer_id);
+CREATE INDEX IF NOT EXISTS idx_sales_orders_warehouse ON sales_orders(warehouse_id);
+CREATE INDEX IF NOT EXISTS idx_sales_orders_status ON sales_orders(status);
+CREATE INDEX IF NOT EXISTS idx_sales_orders_allocation ON sales_orders(allocation_status);
+CREATE INDEX IF NOT EXISTS idx_sales_orders_ref ON sales_orders(ref_code);
+CREATE INDEX IF NOT EXISTS idx_sales_order_items_order ON sales_order_items(sales_order_id);
+CREATE INDEX IF NOT EXISTS idx_sales_order_items_product ON sales_order_items(product_id);
 
 
 -- +goose Down
@@ -159,3 +201,14 @@ DROP INDEX IF EXISTS idx_inventories_key;
 
 DROP TABLE IF EXISTS stock_movements;
 DROP TABLE IF EXISTS inventories;
+
+DROP INDEX IF EXISTS idx_sales_order_items_product;
+DROP INDEX IF EXISTS idx_sales_order_items_order;
+DROP INDEX IF EXISTS idx_sales_orders_ref;
+DROP INDEX IF EXISTS idx_sales_orders_allocation;
+DROP INDEX IF EXISTS idx_sales_orders_status;
+DROP INDEX IF EXISTS idx_sales_orders_warehouse;
+DROP INDEX IF EXISTS idx_sales_orders_customer;
+
+DROP TABLE IF EXISTS sales_order_items;
+DROP TABLE IF EXISTS sales_orders;
