@@ -73,7 +73,7 @@ func (r *userRepository) Create(ctx context.Context, user *model.UserRequest) (i
 func (r *userRepository) GetByID(ctx context.Context, userID int) (*model.UserDTO, error) {
 	return scanUser(ctx, r.db, `
 		SELECT id, ref_code, username, email, password_hash, role, contact, is_active, created_at, updated_at, deleted_at
-		FROM users WHERE id = $1
+		FROM users WHERE id = $1 AND deleted_at IS NULL
 	`, userID)
 }
 

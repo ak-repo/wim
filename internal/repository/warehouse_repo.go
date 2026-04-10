@@ -73,20 +73,20 @@ func (r *warehouseRepository) Create(ctx context.Context, warehouse *model.Wareh
 func (r *warehouseRepository) GetByID(ctx context.Context, warehouseID int) (*model.WarehouseDTO, error) {
 	return scanWarehouse(ctx, r.db, `
 		SELECT id, ref_code, code, name, address_line1, address_line2, city, state, postal_code, country, is_active, created_at, updated_at, deleted_at
-		FROM warehouses WHERE id = $1
+		FROM warehouses WHERE id = $1 AND deleted_at IS NULL
 	`, warehouseID)
 }
 
 func (r *warehouseRepository) GetByCode(ctx context.Context, code string) (*model.WarehouseDTO, error) {
 	return scanWarehouse(ctx, r.db, `
 		SELECT id, ref_code, code, name, address_line1, address_line2, city, state, postal_code, country, is_active, created_at, updated_at, deleted_at
-		FROM warehouses WHERE code = $1
+		FROM warehouses WHERE code = $1 AND deleted_at IS NULL
 	`, code)
 }
 
 func (r *warehouseRepository) ExistsByCode(ctx context.Context, code string) (bool, error) {
 	var exists bool
-	err := r.db.Pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM warehouses WHERE code = $1)`, code).Scan(&exists)
+	err := r.db.Pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM warehouses WHERE code = $1 AND deleted_at IS NULL)`, code).Scan(&exists)
 	if err != nil {
 		return false, apperrors.Wrap(err, apperrors.CodeDatabase, "failed to check warehouse by code")
 	}
@@ -134,7 +134,7 @@ func (r *warehouseRepository) Update(ctx context.Context, warehouseID int, wareh
 }
 
 func (r *warehouseRepository) Delete(ctx context.Context, warehouseID int) error {
-	result, err := r.db.Pool.Exec(ctx, `DELETE FROM warehouses WHERE id = $1`, warehouseID)
+	result, err := r.db.Pool.Exec(ctx, `UPDATE warehouses SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL`, warehouseID)
 	if err != nil {
 		return apperrors.Wrap(err, apperrors.CodeDatabase, "failed to delete warehouse")
 	}
@@ -192,6 +192,9 @@ func (r *warehouseRepository) List(ctx context.Context, params *model.WarehouseP
 		FROM warehouses
 	`
 
+	// Base condition: only get non-deleted records
+	conditions = append(conditions, "deleted_at IS NULL")
+
 	// Active filter
 	if params.Active != nil {
 		conditions = append(conditions, fmt.Sprintf("is_active = $%d", len(args)+1))
@@ -219,6 +222,9 @@ func (r *warehouseRepository) Count(ctx context.Context, params *model.Warehouse
 	var conditions []string
 
 	query := `SELECT COUNT(*) FROM warehouses`
+
+	// Base condition: only count non-deleted records
+	conditions = append(conditions, "deleted_at IS NULL")
 
 	// Active filter
 	if params.Active != nil {

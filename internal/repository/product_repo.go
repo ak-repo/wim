@@ -79,7 +79,7 @@ func (r *productRepository) GetByID(ctx context.Context, productID int) (*model.
 		SELECT id, ref_code, sku, name, description, category, unit_of_measure,
 		       weight, length, width, height, barcode, is_active, created_at, updated_at
 		FROM products
-		WHERE id = $1
+		WHERE id = $1 AND deleted_at IS NULL
 	`
 
 	return scanProduct(ctx, r.db, query, productID)
@@ -91,7 +91,7 @@ func (r *productRepository) GetBySKU(ctx context.Context, sku string) (*model.Pr
 		SELECT id, ref_code, sku, name, description, category, unit_of_measure,
 		       weight, length, width, height, barcode, is_active, created_at, updated_at
 		FROM products
-		WHERE sku = $1
+		WHERE sku = $1 AND deleted_at IS NULL
 	`
 
 	return scanProduct(ctx, r.db, query, sku)
@@ -102,7 +102,7 @@ func (r *productRepository) ExistsBySKU(ctx context.Context, sku string) (bool, 
 	var exists bool
 
 	err := r.db.Pool.QueryRow(ctx,
-		`SELECT EXISTS (SELECT 1 FROM products WHERE sku = $1)`,
+		`SELECT EXISTS (SELECT 1 FROM products WHERE sku = $1 AND deleted_at IS NULL)`,
 		sku,
 	).Scan(&exists)
 
@@ -159,7 +159,7 @@ func (r *productRepository) Update(ctx context.Context, productID int, product *
 // DELETE
 func (r *productRepository) Delete(ctx context.Context, productID int) error {
 	result, err := r.db.Pool.Exec(ctx,
-		`DELETE FROM products WHERE id = $1`,
+		`UPDATE products SET deleted_at = NOW() WHERE id = $1`,
 		productID,
 	)
 
@@ -186,6 +186,9 @@ func (r *productRepository) List(ctx context.Context, params *model.ProductParam
 		       weight, length, width, height, barcode, is_active, created_at, updated_at
 		FROM products
 	`
+
+	// Base condition: only get non-deleted records
+	conditions = append(conditions, "deleted_at IS NULL")
 
 	// filters
 	if params.Active != nil {
@@ -221,6 +224,9 @@ func (r *productRepository) Count(ctx context.Context, params *model.ProductPara
 	)
 
 	query := `SELECT COUNT(*) FROM products`
+
+	// Base condition: only count non-deleted records
+	conditions = append(conditions, "deleted_at IS NULL")
 
 	if params.Active != nil {
 		conditions = append(conditions, fmt.Sprintf("is_active = $%d", len(args)+1))

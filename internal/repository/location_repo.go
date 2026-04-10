@@ -86,20 +86,20 @@ func (r *locationRepository) Create(ctx context.Context, location *model.Locatio
 func (r *locationRepository) GetByID(ctx context.Context, locationID int) (*model.LocationDTO, error) {
 	return scanLocation(ctx, r.db, `
 		SELECT id, ref_code, warehouse_id, zone, aisle, rack, bin, location_code, location_type, is_pick_face, max_weight, is_active, created_at, updated_at, deleted_at
-		FROM locations WHERE id = $1
+		FROM locations WHERE id = $1 AND deleted_at IS NULL
 	`, locationID)
 }
 
 func (r *locationRepository) GetByCode(ctx context.Context, code string) (*model.LocationDTO, error) {
 	return scanLocation(ctx, r.db, `
 		SELECT id, ref_code, warehouse_id, zone, aisle, rack, bin, location_code, location_type, is_pick_face, max_weight, is_active, created_at, updated_at, deleted_at
-		FROM locations WHERE location_code = $1
+		FROM locations WHERE location_code = $1 AND deleted_at IS NULL
 	`, code)
 }
 
 func (r *locationRepository) ExistsByCode(ctx context.Context, code string) (bool, error) {
 	var exists bool
-	err := r.db.Pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM locations WHERE location_code = $1)`, code).Scan(&exists)
+	err := r.db.Pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM locations WHERE location_code = $1 AND deleted_at IS NULL)`, code).Scan(&exists)
 	if err != nil {
 		return false, apperrors.Wrap(err, apperrors.CodeDatabase, "failed to check location by code")
 	}
@@ -147,7 +147,7 @@ func (r *locationRepository) Update(ctx context.Context, locationID int, locatio
 }
 
 func (r *locationRepository) Delete(ctx context.Context, locationID int) error {
-	result, err := r.db.Pool.Exec(ctx, `DELETE FROM locations WHERE id = $1`, locationID)
+	result, err := r.db.Pool.Exec(ctx, `UPDATE locations SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL`, locationID)
 	if err != nil {
 		return apperrors.Wrap(err, apperrors.CodeDatabase, "failed to delete location")
 	}
@@ -206,6 +206,9 @@ func (r *locationRepository) List(ctx context.Context, params *model.LocationPar
 		FROM locations
 	`
 
+	// Base condition: only get non-deleted records
+	conditions = append(conditions, "deleted_at IS NULL")
+
 	// Active filter
 	if params.Active != nil {
 		conditions = append(conditions, fmt.Sprintf("is_active = $%d", len(args)+1))
@@ -246,6 +249,9 @@ func (r *locationRepository) Count(ctx context.Context, params *model.LocationPa
 
 	query := `SELECT COUNT(*) FROM locations`
 
+	// Base condition: only count non-deleted records
+	conditions = append(conditions, "deleted_at IS NULL")
+
 	// Active filter
 	if params.Active != nil {
 		conditions = append(conditions, fmt.Sprintf("is_active = $%d", len(args)+1))
@@ -280,7 +286,7 @@ func (r *locationRepository) Count(ctx context.Context, params *model.LocationPa
 func (r *locationRepository) ListByWarehouse(ctx context.Context, warehouseID int) (model.LocationDTOs, error) {
 	query := `
 		SELECT id, ref_code, warehouse_id, zone, aisle, rack, bin, location_code, location_type, is_pick_face, max_weight, is_active, created_at, updated_at, deleted_at
-		FROM locations WHERE warehouse_id = $1
+		FROM locations WHERE warehouse_id = $1 AND deleted_at IS NULL
 		ORDER BY zone, aisle, rack, bin
 	`
 	return scanLocations(ctx, r.db, query, warehouseID)

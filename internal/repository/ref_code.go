@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"regexp"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/ak-repo/wim/internal/db"
 	apperrors "github.com/ak-repo/wim/pkg/errors"
+	"github.com/jackc/pgx/v5"
 )
 
 type RefCodeGenerator interface {
@@ -58,6 +60,8 @@ func (r *refCodeGenerator) GenerateRefCode(ctx context.Context, prefix string, t
 	if err != nil {
 		return "", err
 	}
+
+	// If no existing ref code, start with empty to generate first one
 	return r.nextRefcode(ctx, prefix, lastCode)
 
 }
@@ -68,7 +72,10 @@ func (r *refCodeGenerator) getLastRefCode(ctx context.Context, tableName string,
 	var refCode string
 	err := r.db.Pool.QueryRow(ctx, query, prefix+"-%").Scan(&refCode)
 	if err != nil {
-		return "", nil
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", nil
+		}
+		return "", err
 	}
 
 	return refCode, nil
@@ -76,17 +83,25 @@ func (r *refCodeGenerator) getLastRefCode(ctx context.Context, tableName string,
 
 func (r *refCodeGenerator) nextRefcode(ctx context.Context, prefix, lastRefCode string) (string, error) {
 
-	re := regexp.MustCompile(prefix + `-(\d+)`)
-	matches := re.FindStringSubmatch(lastRefCode)
-	if len(matches) < 2 {
-		return "", apperrors.New(apperrors.CodeRefCodeFailed, "invalid reference code format")
+	var nextNum int
+
+	if lastRefCode == "" {
+		// No existing ref code, start from 1
+		nextNum = 1
+	} else {
+		re := regexp.MustCompile(prefix + `-(\d+)`)
+		matches := re.FindStringSubmatch(lastRefCode)
+		if len(matches) < 2 {
+			return "", apperrors.New(apperrors.CodeRefCodeFailed, "invalid reference code format")
+		}
+
+		num, err := strconv.Atoi(matches[1])
+		if err != nil {
+			return "", apperrors.Wrap(err, apperrors.CodeRefCodeFailed, "failed to parse reference code")
+		}
+		nextNum = num + 1
 	}
 
-	num, err := strconv.Atoi(matches[1])
-	if err != nil {
-		return "", apperrors.Wrap(err, apperrors.CodeRefCodeFailed, "failed to parse reference code")
-	}
-	nextNum := num + 1
 	nextRefCode := fmt.Sprintf("%s-%03d", prefix, nextNum)
 
 	// Redis Cache
