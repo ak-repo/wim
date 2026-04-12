@@ -50,7 +50,7 @@ export function SalesOrderActionsDialog({
           await deallocateMutation.mutateAsync(salesOrder.id)
           break
         case "ship":
-          await shipMutation.mutateAsync({ id: salesOrder.id, notes })
+          await shipMutation.mutateAsync({ id: salesOrder.id, data: { notes } })
           break
         case "cancel":
           await cancelMutation.mutateAsync(salesOrder.id)

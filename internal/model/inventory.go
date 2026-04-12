@@ -141,3 +141,44 @@ func (m *StockMovementDTO) ApplyNullScalars(createdAt sql.NullTime) {
 		m.CreatedAt = time.Time{}
 	}
 }
+
+// inventory
+type AdjustInventoryRequest struct {
+	ProductID   int    `json:"productId"`
+	WarehouseID int    `json:"warehouseId"`
+	LocationID  int    `json:"locationId"`
+	BatchID     *int   `json:"batchId,omitempty"`
+	Quantity    int    `json:"quantity"`
+	Reason      string `json:"reason"`
+	Notes       string `json:"notes,omitempty"`
+}
+
+type InventoryResponse struct {
+	ID           int       `json:"id"`
+	ProductID    int       `json:"productId"`
+	WarehouseID  int       `json:"warehouseId"`
+	LocationID   int       `json:"locationId"`
+	BatchID      *int      `json:"batchId,omitempty"`
+	Quantity     int       `json:"quantity"`
+	ReservedQty  int       `json:"reservedQty"`
+	AvailableQty int       `json:"availableQty"`
+	Version      int       `json:"version"`
+	CreatedAt    time.Time `json:"createdAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
+}
+
+type StockMovementResponse struct {
+	ID             int       `json:"id"`
+	MovementType   string    `json:"movementType"`
+	ProductID      int       `json:"productId"`
+	WarehouseID    int       `json:"warehouseId"`
+	LocationIDFrom *int      `json:"locationIdFrom,omitempty"`
+	LocationIDTo   *int      `json:"locationIdTo,omitempty"`
+	BatchID        *int      `json:"batchId,omitempty"`
+	Quantity       int       `json:"quantity"`
+	ReferenceType  string    `json:"referenceType,omitempty"`
+	ReferenceID    *int      `json:"referenceId,omitempty"`
+	PerformedBy    *int      `json:"performedBy,omitempty"`
+	Notes          string    `json:"notes,omitempty"`
+	CreatedAt      time.Time `json:"createdAt"`
+}

@@ -24,9 +24,9 @@ export const InventoryAdjustDialog: React.FC<InventoryAdjustDialogProps> = ({
   onOpenChange,
 }) => {
   const adjustInventory = useAdjustInventory()
-  const { data: productsData } = useProducts({ limit: 100 })
-  const { data: warehousesData } = useWarehouses({ limit: 100 })
-  const { data: locationsData } = useLocations({ limit: 100 })
+  const { data: productsData } = useProducts({ page: 1, limit: 100 })
+  const { data: warehousesData } = useWarehouses({ page: 1, limit: 100 })
+  const { data: locationsData } = useLocations({ page: 1, limit: 100 })
 
   const [formData, setFormData] = React.useState({
     productId: "",
@@ -127,10 +127,10 @@ export const InventoryAdjustDialog: React.FC<InventoryAdjustDialogProps> = ({
               >
                 <option value="">Select location</option>
                 {locationsData?.data
-                  .filter((l) => !formData.warehouseId || l.warehouseId === parseInt(formData.warehouseId))
+                  .filter((l) => !formData.warehouseId || l.warehouseId === formData.warehouseId)
                   .map((l) => (
                     <option key={l.id} value={l.id}>
-                      {l.code}
+                      {l.locationCode}
                     </option>
                   ))}
               </Select>
