@@ -17,6 +17,7 @@ type ProductService interface {
 	UpdateProduct(ctx context.Context, productID int, input *model.ProductRequest) error
 	DeleteProduct(ctx context.Context, productID int) error
 	ListProducts(ctx context.Context, params *model.ProductParams) ([]*model.ProductResponse, int, error)
+	GetProductCount(ctx context.Context, param *model.ProductParams) (int, error)
 }
 
 type productService struct {
@@ -165,4 +166,12 @@ func (s *productService) ListProducts(ctx context.Context, params *model.Product
 	}
 
 	return products.ToAPIResponse(), count, nil
+}
+
+func (s *productService) GetProductCount(ctx context.Context, param *model.ProductParams) (int, error) {
+	count, err := s.repos.Product.Count(ctx, param)
+	if err != nil {
+		return 0, apperrors.Wrap(err, apperrors.CodeDatabase, "failed to count product")
+	}
+	return count, nil
 }

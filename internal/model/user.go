@@ -38,7 +38,7 @@ type UserRequest struct {
 	RefCode      string  `json:"refCode,omitempty"`
 	Username     *string `json:"username,omitempty"`
 	Email        *string `json:"email,omitempty"`
-	PasswordHash *string `json:"passwordHash,omitempty"`
+	PasswordHash *string `json:"password,omitempty"`
 	Role         *string `json:"role,omitempty"`
 	Contact      *string `json:"contact,omitempty"`
 	IsActive     *bool   `json:"isActive,omitempty"`

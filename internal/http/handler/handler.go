@@ -11,6 +11,7 @@ type Handler struct {
 	Location   *LocationHandler
 	Inventory  *InventoryHandler
 	SalesOrder *SalesOrderHandler
+	Dashboard  *DashboardHandler
 }
 
 func NewHandlers(services *service.Services) *Handler {
@@ -23,5 +24,6 @@ func NewHandlers(services *service.Services) *Handler {
 		Location:   NewLocationHandler(services),
 		Inventory:  NewInventoryHandler(services),
 		SalesOrder: NewSalesOrderHandler(services),
+		Dashboard:  NewDashboardHandler(services),
 	}
 }
