@@ -16,8 +16,10 @@ import (
 type RefCodeGenerator interface {
 	GenerateUserRefCode(ctx context.Context) (string, error)
 	GenerateProductRefCode(ctx context.Context) (string, error)
+	GenerateProductCategoryRefCode(ctx context.Context) (string, error)
 	GenerateWarehouseRefCode(ctx context.Context) (string, error)
 	GenerateLocationRefCode(ctx context.Context) (string, error)
+	GenerateUserRoleRefCode(ctx context.Context) (string, error)
 	GenerateSalesOrderRefCode(ctx context.Context) (string, error)
 }
 
@@ -38,12 +40,20 @@ func (r *refCodeGenerator) GenerateProductRefCode(ctx context.Context) (string, 
 	return r.GenerateRefCode(ctx, "PRD", "products", "ref_code")
 }
 
+func (r *refCodeGenerator) GenerateProductCategoryRefCode(ctx context.Context) (string, error) {
+	return r.GenerateRefCode(ctx, "PCAT", "product_categories", "ref_code")
+}
+
 func (r *refCodeGenerator) GenerateWarehouseRefCode(ctx context.Context) (string, error) {
 	return r.GenerateRefCode(ctx, "WH", "warehouses", "ref_code")
 }
 
 func (r *refCodeGenerator) GenerateLocationRefCode(ctx context.Context) (string, error) {
 	return r.GenerateRefCode(ctx, "LOC", "locations", "ref_code")
+}
+
+func (r *refCodeGenerator) GenerateUserRoleRefCode(ctx context.Context) (string, error) {
+	return r.GenerateRefCode(ctx, "ROLE", "user_roles", "ref_code")
 }
 
 func (r *refCodeGenerator) GenerateSalesOrderRefCode(ctx context.Context) (string, error) {

@@ -37,12 +37,12 @@ export const userService = {
     return response.data
   },
 
-  updateUser: async (id: string, data: Partial<UserRequest>): Promise<User> => {
+  updateUser: async (id: number, data: Partial<UserRequest>): Promise<User> => {
     const response = await apiService.put<User>(`/admin/users/${id}`, data)
     return response.data
   },
 
-  deleteUser: async (id: string): Promise<void> => {
+  deleteUser: async (id: number): Promise<void> => {
     await apiService.delete(`/admin/users/${id}`)
   },
 }

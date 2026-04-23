@@ -7,13 +7,15 @@ import (
 )
 
 type Services struct {
-	User       UserService
-	Auth       AuthService
-	Product    ProductService
-	Warehouse  WarehouseService
-	Location   LocationService
-	Inventory  InventoryService
-	SalesOrder SalesOrderService
+	User            UserService
+	Auth            AuthService
+	Product         ProductService
+	ProductCategory ProductCategoryService
+	Warehouse       WarehouseService
+	Location        LocationService
+	Inventory       InventoryService
+	SalesOrder      SalesOrderService
+	UserRole        UserRoleService
 }
 
 type Dependencies struct {
@@ -25,12 +27,14 @@ type Dependencies struct {
 
 func NewServices(deps Dependencies) *Services {
 	return &Services{
-		User:       NewUserService(deps.Repositories, deps.PasswordHasher),
-		Auth:       NewAuthService(deps.Repositories, deps.TokenManager, deps.PasswordHasher),
-		Product:    NewProductService(deps.Repositories),
-		Warehouse:  NewWarehouseService(deps.Repositories),
-		Location:   NewLocationService(deps.Repositories),
-		Inventory:  NewInventoryService(deps.Repositories),
-		SalesOrder: NewSalesOrderService(deps.Repositories, deps.EventPublisher),
+		User:            NewUserService(deps.Repositories, deps.PasswordHasher),
+		Auth:            NewAuthService(deps.Repositories, deps.TokenManager, deps.PasswordHasher),
+		Product:         NewProductService(deps.Repositories),
+		ProductCategory: NewProductCategoryService(deps.Repositories),
+		Warehouse:       NewWarehouseService(deps.Repositories),
+		Location:        NewLocationService(deps.Repositories),
+		Inventory:       NewInventoryService(deps.Repositories),
+		SalesOrder:      NewSalesOrderService(deps.Repositories, deps.EventPublisher),
+		UserRole:        NewUserRoleService(deps.Repositories),
 	}
 }

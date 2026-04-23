@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import { Select } from "@/components/ui/Select"
+import { useUserRoles } from "@/features/userRoles/hooks"
 import { useCreateUser, useUpdateUser } from "@/features/auth/hooks"
 import type { User, UserRequest } from "@/features/auth/types"
 
@@ -26,12 +27,13 @@ export const UserFormDialog: React.FC<UserFormDialogProps> = ({
   const createUser = useCreateUser()
   const updateUser = useUpdateUser()
   const isEditing = !!user
+  const { data: rolesData } = useUserRoles({ page: 1, limit: 100 })
 
   const [formData, setFormData] = React.useState({
     username: user?.username || "",
     email: user?.email || "",
     password: "",
-    role: user?.role || "admin",
+    role: user?.role || "",
     contact: user?.contact || "",
     isActive: user?.isActive ?? true,
   })
@@ -41,7 +43,7 @@ export const UserFormDialog: React.FC<UserFormDialogProps> = ({
       username: user?.username || "",
       email: user?.email || "",
       password: "",
-      role: user?.role || "admin",
+    role: user?.role || "",
       contact: user?.contact || "",
       isActive: user?.isActive ?? true,
     })
@@ -140,9 +142,12 @@ export const UserFormDialog: React.FC<UserFormDialogProps> = ({
               value={formData.role}
               onChange={handleChange}
             >
-              <option value="admin">Admin</option>
-              <option value="manager">Manager</option>
-              <option value="worker">Worker</option>
+              <option value="">Select role</option>
+              {rolesData?.data?.map((role) => (
+                <option key={role.id} value={role.name}>
+                  {role.name}
+                </option>
+              ))}
             </Select>
           </div>
 

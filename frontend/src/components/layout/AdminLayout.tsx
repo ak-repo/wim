@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   Users,
   Package,
+  Layers,
   Warehouse,
   MapPin,
   Database,
@@ -29,8 +30,8 @@ interface SidebarItem {
 
 const navigation: SidebarItem[] = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Users", href: "/users", icon: Users },
-  { name: "Products", href: "/products", icon: Package },
+  { name: "User Master", href: "/users", icon: Users },
+  { name: "Product Master", href: "/products", icon: Layers },
   { name: "Warehouses", href: "/warehouses", icon: Warehouse },
   { name: "Locations", href: "/locations", icon: MapPin },
   { name: "Inventory", href: "/inventory", icon: Database },

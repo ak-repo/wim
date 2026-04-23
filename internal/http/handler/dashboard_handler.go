@@ -20,13 +20,34 @@ func (h *DashboardHandler) TotalCounts(w http.ResponseWriter, r *http.Request) {
 
 	resp := model.TotalCount{}
 	var err error
+	
+	// Get total products count
 	resp.TotalProducts, err = h.services.Product.GetProductCount(r.Context(), &model.ProductParams{})
 	if err != nil {
 		response.WriteServiceError(w, err)
 		return
 	}
 
-	//TODO: like this implement other counts need adding the proper service functions .
+	// Get total users count
+	resp.TotalUsers, err = h.services.User.GetUserCount(r.Context(), &model.UserParams{})
+	if err != nil {
+		response.WriteServiceError(w, err)
+		return
+	}
+
+	// Get total warehouses count
+	resp.TotalWarehouses, err = h.services.Warehouse.GetWarehouseCount(r.Context(), &model.WarehouseParams{})
+	if err != nil {
+		response.WriteServiceError(w, err)
+		return
+	}
+
+	// Get total locations count
+	resp.TotalLocations, err = h.services.Location.GetLocationCount(r.Context(), &model.LocationParams{})
+	if err != nil {
+		response.WriteServiceError(w, err)
+		return
+	}
 
 	response.WriteJSON(w, http.StatusOK, resp)
 }

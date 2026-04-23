@@ -1,5 +1,3 @@
-import type { UUID } from "@/types"
-
 export interface LoginRequest {
   email: string
   password: string
@@ -23,7 +21,7 @@ export interface RefreshTokenRequest {
 }
 
 export interface User {
-  id: UUID
+  id: number
   username: string
   email: string
   role: string
@@ -34,7 +32,7 @@ export interface User {
 }
 
 export interface UserRequest {
-  id?: UUID
+  id?: number
   username: string
   email: string
   password?: string

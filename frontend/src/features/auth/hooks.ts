@@ -23,7 +23,7 @@ export const useLogin = () => {
       // Mock user data since backend doesn't return it directly
       // In a real app, you'd decode the JWT or fetch user profile
       const mockUser: User = {
-        id: "",
+        id: 0,
         username: "",
         email: "",
         role: "admin",
@@ -74,7 +74,7 @@ export const useUpdateUser = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<UserRequest> }) =>
+    mutationFn: ({ id, data }: { id: number; data: Partial<UserRequest> }) =>
       userService.updateUser(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] })

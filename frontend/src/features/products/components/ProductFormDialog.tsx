@@ -8,7 +8,9 @@ import {
 } from "@/components/ui/Dialog"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
+import { Select } from "@/components/ui/Select"
 import { useCreateProduct, useUpdateProduct } from "@/features/products/hooks"
+import { useProductCategories } from "@/features/productCategories/hooks"
 import type { Product, CreateProductRequest, UpdateProductRequest } from "@/features/products/types"
 
 interface ProductFormDialogProps {
@@ -25,6 +27,7 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
   const createProduct = useCreateProduct()
   const updateProduct = useUpdateProduct()
   const isEditing = !!product
+  const { data: categoriesData } = useProductCategories({ page: 1, limit: 100 })
 
   const [formData, setFormData] = React.useState({
     sku: product?.sku || "",
@@ -44,7 +47,7 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
       sku: product?.sku || "",
       name: product?.name || "",
       description: product?.description || "",
-      category: product?.category || "",
+    category: product?.category || "",
       unitOfMeasure: product?.unitOfMeasure || "unit",
       weight: product?.weight?.toString() || "",
       length: product?.length?.toString() || "",
@@ -54,7 +57,7 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
     })
   }, [product, open])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
@@ -152,15 +155,21 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Category</label>
-              <Input
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                placeholder="Category"
-              />
-            </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Category</label>
+            <Select
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+            >
+              <option value="">Uncategorized</option>
+              {categoriesData?.data?.map((category) => (
+                <option key={category.id} value={category.name}>
+                  {category.name}
+                </option>
+              ))}
+            </Select>
+          </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Barcode</label>

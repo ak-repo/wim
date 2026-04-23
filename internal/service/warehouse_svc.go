@@ -17,6 +17,7 @@ type WarehouseService interface {
 	UpdateWarehouse(ctx context.Context, warehouseID int, input *model.WarehouseRequest) error
 	DeleteWarehouse(ctx context.Context, warehouseID int) error
 	ListWarehouses(ctx context.Context, params *model.WarehouseParams) ([]*model.WarehouseResponse, int, error)
+	GetWarehouseCount(ctx context.Context, params *model.WarehouseParams) (int, error)
 }
 
 type warehouseService struct {
@@ -163,4 +164,12 @@ func (s *warehouseService) ListWarehouses(ctx context.Context, params *model.War
 	}
 
 	return warehouses.ToAPIResponse(), count, nil
+}
+
+func (s *warehouseService) GetWarehouseCount(ctx context.Context, params *model.WarehouseParams) (int, error) {
+	count, err := s.repos.Warehouse.Count(ctx, params)
+	if err != nil {
+		return 0, apperrors.Wrap(err, apperrors.CodeDatabase, "failed to count warehouses")
+	}
+	return count, nil
 }

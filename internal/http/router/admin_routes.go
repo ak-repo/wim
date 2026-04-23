@@ -37,6 +37,15 @@ func AdminRoutes(r chi.Router, handlers *handler.Handler, tokenManager auth.Toke
 		products.Delete("/{id}", handlers.Product.DeleteProduct)
 	})
 
+	// Product Category Routes
+	privateRoutes.Route("/product-categories", func(categories chi.Router) {
+		categories.Post("/", handlers.ProductCategory.CreateProductCategory)
+		categories.Get("/", handlers.ProductCategory.ListProductCategories)
+		categories.Get("/{id}", handlers.ProductCategory.GetProductCategoryByID)
+		categories.Patch("/{id}", handlers.ProductCategory.UpdateProductCategory)
+		categories.Delete("/{id}", handlers.ProductCategory.DeleteProductCategory)
+	})
+
 	// location Routes
 	privateRoutes.Route("/locations", func(locations chi.Router) {
 		locations.Post("/", handlers.Location.CreateLocation)
@@ -86,6 +95,15 @@ func AdminRoutes(r chi.Router, handlers *handler.Handler, tokenManager auth.Toke
 	// Dashboard Routes
 	privateRoutes.Route("/dashboard", func(dashboard chi.Router) {
 		dashboard.Get("/counts", handlers.Dashboard.TotalCounts)
+	})
+
+	// User Role Routes
+	privateRoutes.Route("/user-roles", func(roles chi.Router) {
+		roles.Post("/", handlers.UserRole.CreateUserRole)
+		roles.Get("/", handlers.UserRole.ListUserRoles)
+		roles.Get("/{id}", handlers.UserRole.GetUserRoleByID)
+		roles.Patch("/{id}", handlers.UserRole.UpdateUserRole)
+		roles.Delete("/{id}", handlers.UserRole.DeleteUserRole)
 	})
 
 }

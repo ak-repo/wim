@@ -18,6 +18,7 @@ type LocationService interface {
 	DeleteLocation(ctx context.Context, locationID int) error
 	ListLocations(ctx context.Context, params *model.LocationParams) ([]*model.LocationResponse, int, error)
 	ListLocationsByWarehouse(ctx context.Context, warehouseID int) ([]*model.LocationResponse, error)
+	GetLocationCount(ctx context.Context, params *model.LocationParams) (int, error)
 }
 
 type locationService struct {
@@ -178,4 +179,12 @@ func (s *locationService) ListLocationsByWarehouse(ctx context.Context, warehous
 		return nil, apperrors.Wrap(err, apperrors.CodeDatabase, "failed to list locations by warehouse")
 	}
 	return locations.ToAPIResponse(), nil
+}
+
+func (s *locationService) GetLocationCount(ctx context.Context, params *model.LocationParams) (int, error) {
+	count, err := s.repos.Location.Count(ctx, params)
+	if err != nil {
+		return 0, apperrors.Wrap(err, apperrors.CodeDatabase, "failed to count locations")
+	}
+	return count, nil
 }

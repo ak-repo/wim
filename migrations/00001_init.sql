@@ -146,6 +146,27 @@ CREATE TABLE IF NOT EXISTS sales_order_items (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS product_categories (
+    id BIGSERIAL PRIMARY KEY,
+    ref_code TEXT UNIQUE NOT NULL,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL
+);
+
+CREATE TABLE IF NOT EXISTS user_roles (
+    id BIGSERIAL PRIMARY KEY,
+    ref_code TEXT UNIQUE NOT NULL,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL
+);
+
+
 CREATE INDEX IF NOT EXISTS idx_products_sku ON products(sku);
 CREATE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode);
 CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
@@ -172,6 +193,12 @@ CREATE INDEX IF NOT EXISTS idx_sales_orders_allocation ON sales_orders(allocatio
 CREATE INDEX IF NOT EXISTS idx_sales_orders_ref ON sales_orders(ref_code);
 CREATE INDEX IF NOT EXISTS idx_sales_order_items_order ON sales_order_items(sales_order_id);
 CREATE INDEX IF NOT EXISTS idx_sales_order_items_product ON sales_order_items(product_id);
+
+
+CREATE INDEX IF NOT EXISTS idx_product_categories_name ON product_categories(name);
+CREATE INDEX IF NOT EXISTS idx_product_categories_active ON product_categories(is_active);
+CREATE INDEX IF NOT EXISTS idx_user_roles_name ON user_roles(name);
+CREATE INDEX IF NOT EXISTS idx_user_roles_active ON user_roles(is_active);
 
 
 -- +goose Down
@@ -212,3 +239,10 @@ DROP INDEX IF EXISTS idx_sales_orders_customer;
 
 DROP TABLE IF EXISTS sales_order_items;
 DROP TABLE IF EXISTS sales_orders;
+
+DROP INDEX IF EXISTS idx_user_roles_active;
+DROP INDEX IF EXISTS idx_user_roles_name;
+DROP INDEX IF EXISTS idx_product_categories_active;
+DROP INDEX IF EXISTS idx_product_categories_name;
+DROP TABLE IF EXISTS user_roles;
+DROP TABLE IF EXISTS product_categories;

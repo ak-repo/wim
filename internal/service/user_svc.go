@@ -17,6 +17,7 @@ type UserService interface {
 	UpdateUser(ctx context.Context, userID int, input *model.UserRequest) error
 	DeleteUser(ctx context.Context, userID int) error
 	ListUsers(ctx context.Context, params *model.UserParams) ([]*model.UserResponse, int, error)
+	GetUserCount(ctx context.Context, params *model.UserParams) (int, error)
 }
 
 type userService struct {
@@ -200,4 +201,12 @@ func (s *userService) ListUsers(ctx context.Context, params *model.UserParams) (
 		return nil, 0, apperrors.Wrap(err, apperrors.CodeDatabase, "failed to count users")
 	}
 	return users.ToAPIResponse(), count, nil
+}
+
+func (s *userService) GetUserCount(ctx context.Context, params *model.UserParams) (int, error) {
+	count, err := s.repos.User.Count(ctx, params)
+	if err != nil {
+		return 0, apperrors.Wrap(err, apperrors.CodeDatabase, "failed to count users")
+	}
+	return count, nil
 }
