@@ -24,7 +24,10 @@ import (
 func main() {
 	ctx := context.Background()
 
-	cfg := config.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatal("failed to load config", "error", err)
+	}
 
 	log.Println("starting warehouse inventory API")
 

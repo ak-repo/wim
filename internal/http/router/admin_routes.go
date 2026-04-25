@@ -9,14 +9,15 @@ import (
 )
 
 func AdminRoutes(r chi.Router, handlers *handler.Handler, tokenManager auth.TokenManager) {
-	publicRoutes := r.Route("/adminPublic", func(public chi.Router) {})
-	privateRoutes := r.Route("/admin", func(private chi.Router) {
-		private.Use(wimMiddleware.RequireAuth(tokenManager))
-		private.Use(wimMiddleware.RoleBasedAccessControl(constants.RoleAdmin))
+	r.Route("/adminPublic", func(public chi.Router) {
+		public.Post("/login", handlers.Auth.Login)
+		public.Post("/register", handlers.Auth.Register)
 	})
 
-	publicRoutes.Post("/login", handlers.Auth.Login)
-	publicRoutes.Post("/register", handlers.Auth.Register)
+	privateRoutes := r.Route("/admin", func(private chi.Router) {
+		private.Use(wimMiddleware.RequireAuth(tokenManager))
+		private.Use(wimMiddleware.RoleBasedAccessControl(constants.RoleSuperAdmin))
+	})
 
 	// Users Routes
 	privateRoutes.Route("/users", func(users chi.Router) {

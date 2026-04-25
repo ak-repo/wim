@@ -1,15 +1,18 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 
+	"github.com/ak-repo/wim/internal/errs"
+	"github.com/ak-repo/wim/internal/httpx"
 	"github.com/ak-repo/wim/internal/model"
 	"github.com/ak-repo/wim/internal/service"
-	apperrors "github.com/ak-repo/wim/pkg/errors"
-	"github.com/ak-repo/wim/pkg/response"
 	"github.com/ak-repo/wim/pkg/utils"
 	"github.com/go-chi/chi"
 )
+
+const opProduct errs.Op = "handler/ProductHandler"
 
 type ProductHandler struct {
 	services *service.Services
@@ -28,11 +31,11 @@ func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 
 	id, err := h.services.Product.CreateProduct(r.Context(), &req)
 	if err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
-	response.WriteJSON(w, http.StatusCreated, map[string]int{
+	httpx.WriteJSON(w, http.StatusCreated, map[string]int{
 		"id": id,
 	})
 }
@@ -46,28 +49,28 @@ func (h *ProductHandler) GetProductByID(w http.ResponseWriter, r *http.Request) 
 
 	product, err := h.services.Product.GetProductByID(r.Context(), id)
 	if err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
-	response.WriteJSON(w, http.StatusOK, product)
+	httpx.WriteJSON(w, http.StatusOK, product)
 }
 
 // GET PRODUCT BY SKU
 func (h *ProductHandler) GetProductBySKU(w http.ResponseWriter, r *http.Request) {
 	sku := chi.URLParam(r, "sku")
 	if sku == "" {
-		response.WriteError(w, http.StatusBadRequest, apperrors.CodeInvalidInput, "sku is required")
+		httpx.WriteError(w, r, errs.E(opProduct+".GetProductBySKU", errs.InvalidRequest, errors.New("sku is required")))
 		return
 	}
 
 	product, err := h.services.Product.GetProductBySKU(r.Context(), sku)
 	if err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
-	response.WriteJSON(w, http.StatusOK, product)
+	httpx.WriteJSON(w, http.StatusOK, product)
 }
 
 // UPDATE PRODUCT (PATCH)
@@ -83,11 +86,11 @@ func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.services.Product.UpdateProduct(r.Context(), id, &req); err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
-	response.WriteJSON(w, http.StatusOK, map[string]string{
+	httpx.WriteJSON(w, http.StatusOK, map[string]string{
 		"message": "product updated",
 	})
 }
@@ -100,11 +103,11 @@ func (h *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.services.Product.DeleteProduct(r.Context(), id); err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
-	response.WriteJSON(w, http.StatusOK, map[string]string{
+	httpx.WriteJSON(w, http.StatusOK, map[string]string{
 		"message": "product deleted",
 	})
 }
@@ -122,13 +125,13 @@ func (h *ProductHandler) ListProducts(w http.ResponseWriter, r *http.Request) {
 
 	data, count, err := h.services.Product.ListProducts(r.Context(), params)
 	if err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
 	totalPage := (count + params.Limit - 1) / params.Limit
 
-	response.WriteJSON(w, http.StatusOK, map[string]any{
+	httpx.WriteJSON(w, http.StatusOK, map[string]any{
 		"data":         data,
 		"total_count":  count,
 		"total_page":   totalPage,

@@ -3,9 +3,9 @@ package handler
 import (
 	"net/http"
 
+	"github.com/ak-repo/wim/internal/httpx"
 	"github.com/ak-repo/wim/internal/model"
 	"github.com/ak-repo/wim/internal/service"
-	"github.com/ak-repo/wim/pkg/response"
 	"github.com/ak-repo/wim/pkg/utils"
 )
 
@@ -25,11 +25,11 @@ func (h *UserRoleHandler) CreateUserRole(w http.ResponseWriter, r *http.Request)
 
 	id, err := h.services.UserRole.CreateUserRole(r.Context(), &req)
 	if err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
-	response.WriteJSON(w, http.StatusCreated, map[string]int{"id": id})
+	httpx.WriteJSON(w, http.StatusCreated, map[string]int{"id": id})
 }
 
 func (h *UserRoleHandler) GetUserRoleByID(w http.ResponseWriter, r *http.Request) {
@@ -40,11 +40,11 @@ func (h *UserRoleHandler) GetUserRoleByID(w http.ResponseWriter, r *http.Request
 
 	role, err := h.services.UserRole.GetUserRoleByID(r.Context(), id)
 	if err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
-	response.WriteJSON(w, http.StatusOK, role)
+	httpx.WriteJSON(w, http.StatusOK, role)
 }
 
 func (h *UserRoleHandler) UpdateUserRole(w http.ResponseWriter, r *http.Request) {
@@ -59,11 +59,11 @@ func (h *UserRoleHandler) UpdateUserRole(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err := h.services.UserRole.UpdateUserRole(r.Context(), id, &req); err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
-	response.WriteJSON(w, http.StatusOK, map[string]string{"message": "user role updated"})
+	httpx.WriteJSON(w, http.StatusOK, map[string]string{"message": "user role updated"})
 }
 
 func (h *UserRoleHandler) DeleteUserRole(w http.ResponseWriter, r *http.Request) {
@@ -73,11 +73,11 @@ func (h *UserRoleHandler) DeleteUserRole(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err := h.services.UserRole.DeleteUserRole(r.Context(), id); err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
-	response.WriteJSON(w, http.StatusOK, map[string]string{"message": "user role deleted"})
+	httpx.WriteJSON(w, http.StatusOK, map[string]string{"message": "user role deleted"})
 }
 
 func (h *UserRoleHandler) ListUserRoles(w http.ResponseWriter, r *http.Request) {
@@ -90,12 +90,12 @@ func (h *UserRoleHandler) ListUserRoles(w http.ResponseWriter, r *http.Request) 
 
 	data, count, err := h.services.UserRole.ListUserRoles(r.Context(), params)
 	if err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
 	totalPage := (count + params.Limit - 1) / params.Limit
-	response.WriteJSON(w, http.StatusOK, map[string]any{
+	httpx.WriteJSON(w, http.StatusOK, map[string]any{
 		"data":         data,
 		"total_count":  count,
 		"total_page":   totalPage,

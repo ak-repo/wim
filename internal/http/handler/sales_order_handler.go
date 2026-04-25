@@ -1,13 +1,17 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 
+	"github.com/ak-repo/wim/internal/errs"
+	"github.com/ak-repo/wim/internal/httpx"
 	"github.com/ak-repo/wim/internal/model"
 	"github.com/ak-repo/wim/internal/service"
-	"github.com/ak-repo/wim/pkg/response"
 	"github.com/ak-repo/wim/pkg/utils"
 )
+
+const opSalesOrder errs.Op = "handler/SalesOrderHandler"
 
 type SalesOrderHandler struct {
 	services *service.Services
@@ -30,11 +34,11 @@ func (h *SalesOrderHandler) CreateSalesOrder(w http.ResponseWriter, r *http.Requ
 
 	order, err := h.services.SalesOrder.CreateSalesOrder(r.Context(), &req, createdBy)
 	if err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
-	response.WriteJSON(w, http.StatusCreated, order)
+	httpx.WriteJSON(w, http.StatusCreated, order)
 }
 
 // GetSalesOrderByID retrieves a sales order by ID
@@ -46,28 +50,28 @@ func (h *SalesOrderHandler) GetSalesOrderByID(w http.ResponseWriter, r *http.Req
 
 	order, err := h.services.SalesOrder.GetSalesOrderByID(r.Context(), id)
 	if err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
-	response.WriteJSON(w, http.StatusOK, order)
+	httpx.WriteJSON(w, http.StatusOK, order)
 }
 
 // GetSalesOrderByRefCode retrieves a sales order by reference code
 func (h *SalesOrderHandler) GetSalesOrderByRefCode(w http.ResponseWriter, r *http.Request) {
 	refCode := r.URL.Query().Get("refCode")
 	if refCode == "" {
-		response.WriteError(w, http.StatusBadRequest, "INVALID_INPUT", "refCode is required")
+		httpx.WriteError(w, r, errs.E(opSalesOrder+".GetSalesOrderByRefCode", errs.InvalidRequest, errors.New("refCode is required")))
 		return
 	}
 
 	order, err := h.services.SalesOrder.GetSalesOrderByRefCode(r.Context(), refCode)
 	if err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
-	response.WriteJSON(w, http.StatusOK, order)
+	httpx.WriteJSON(w, http.StatusOK, order)
 }
 
 // ListSalesOrders lists sales orders with optional filtering
@@ -85,13 +89,13 @@ func (h *SalesOrderHandler) ListSalesOrders(w http.ResponseWriter, r *http.Reque
 
 	data, count, err := h.services.SalesOrder.ListSalesOrders(r.Context(), params)
 	if err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
 	totalPage := (count + params.Limit - 1) / params.Limit
 
-	response.WriteJSON(w, http.StatusOK, map[string]any{
+	httpx.WriteJSON(w, http.StatusOK, map[string]any{
 		"data":         data,
 		"total_count":  count,
 		"total_page":   totalPage,
@@ -114,11 +118,11 @@ func (h *SalesOrderHandler) UpdateSalesOrder(w http.ResponseWriter, r *http.Requ
 
 	order, err := h.services.SalesOrder.UpdateSalesOrder(r.Context(), id, &req)
 	if err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
-	response.WriteJSON(w, http.StatusOK, order)
+	httpx.WriteJSON(w, http.StatusOK, order)
 }
 
 // CancelSalesOrder cancels a sales order
@@ -129,11 +133,11 @@ func (h *SalesOrderHandler) CancelSalesOrder(w http.ResponseWriter, r *http.Requ
 	}
 
 	if err := h.services.SalesOrder.CancelSalesOrder(r.Context(), id); err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
-	response.WriteJSON(w, http.StatusOK, map[string]string{
+	httpx.WriteJSON(w, http.StatusOK, map[string]string{
 		"message": "sales order cancelled",
 	})
 }
@@ -155,11 +159,11 @@ func (h *SalesOrderHandler) AllocateSalesOrder(w http.ResponseWriter, r *http.Re
 	// TODO: Extract user ID from auth context
 
 	if err := h.services.SalesOrder.AllocateSalesOrder(r.Context(), id, performedBy); err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
-	response.WriteJSON(w, http.StatusOK, map[string]string{
+	httpx.WriteJSON(w, http.StatusOK, map[string]string{
 		"message": "sales order allocated",
 	})
 }
@@ -172,11 +176,11 @@ func (h *SalesOrderHandler) DeallocateSalesOrder(w http.ResponseWriter, r *http.
 	}
 
 	if err := h.services.SalesOrder.DeallocateSalesOrder(r.Context(), id); err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
-	response.WriteJSON(w, http.StatusOK, map[string]string{
+	httpx.WriteJSON(w, http.StatusOK, map[string]string{
 		"message": "sales order deallocated",
 	})
 }
@@ -198,11 +202,11 @@ func (h *SalesOrderHandler) ShipSalesOrder(w http.ResponseWriter, r *http.Reques
 	// TODO: Extract user ID from auth context
 
 	if err := h.services.SalesOrder.ShipSalesOrder(r.Context(), id, &req, performedBy); err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
-	response.WriteJSON(w, http.StatusOK, map[string]string{
+	httpx.WriteJSON(w, http.StatusOK, map[string]string{
 		"message": "sales order shipped",
 	})
 }

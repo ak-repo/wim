@@ -39,8 +39,6 @@ services:
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
-    container_name: ${KAFKA_CONTAINER_NAME}
-
     ports:
       - "${KAFKA_PORT}:9092"
 

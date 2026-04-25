@@ -5,8 +5,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
+
+/*
+========================
+STRUCT DEFINITIONS
+========================
+*/
 
 type Config struct {
 	Server   ServerConfig
@@ -19,8 +26,8 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Port int
 	Host string
+	Port int
 }
 
 type AuthConfig struct {
@@ -31,7 +38,6 @@ type AuthConfig struct {
 }
 
 type DatabaseConfig struct {
-	URL      string
 	Host     string
 	Port     int
 	User     string
@@ -43,13 +49,10 @@ type DatabaseConfig struct {
 	ConnectRetries           int
 	ConnectRetryInitialDelay time.Duration
 	ConnectRetryMaxDelay     time.Duration
+	URL                      string
 }
 
 func (d DatabaseConfig) DSN() string {
-	if d.URL != "" {
-		return d.URL
-	}
-
 	return fmt.Sprintf(
 		"postgres://%s:%s@%s:%d/%s?sslmode=%s",
 		d.User,
@@ -72,28 +75,29 @@ type KafkaConfig struct {
 	Brokers []string
 	Topic   string
 	GroupID string
-	// Producer settings
+
 	ProducerAsync bool
 	BatchSize     int
 	BatchTimeout  time.Duration
-	RequiredAcks  int    // 0, 1, -1 (all)
-	Compression   string // "none", "gzip", "snappy", "lz4"
+	RequiredAcks  int
+	Compression   string
 	Idempotent    bool
-	// Consumer settings
+
 	MinBytes       int
 	MaxBytes       int
 	MaxWait        time.Duration
 	AutoCommit     bool
 	CommitInterval time.Duration
-	// Security settings
+
 	EnableSASL    bool
 	SASLMechanism string
 	SASLUsername  string
 	SASLPassword  string
-	EnableTLS     bool
-	TLSCAFile     string
-	TLSCertFile   string
-	TLSKeyFile    string
+
+	EnableTLS   bool
+	TLSCAFile   string
+	TLSCertFile string
+	TLSKeyFile  string
 }
 
 type WorkerConfig struct {
@@ -104,68 +108,131 @@ type WorkerConfig struct {
 	BatchSize  int
 }
 
-func Load() *Config {
+/*
+========================
+LOAD FUNCTION
+========================
+*/
+
+func Load() (*Config, error) {
+	_ = godotenv.Load(".env")
+
 	v := viper.New()
+
+	// YAML
 	v.SetConfigName("config")
 	v.SetConfigType("yaml")
 	v.AddConfigPath(".")
 	v.AddConfigPath("./config")
-	v.AddConfigPath("/etc/warehouse-inventory/")
 
-	v.SetDefault("server.port", 8080)
-	v.SetDefault("server.host", "0.0.0.0")
-	v.SetDefault("auth.jwt_secret", "change-me-in-production")
-	v.SetDefault("auth.jwt_issuer", "wim")
-	v.SetDefault("auth.access_token_ttl", "168h")
-	v.SetDefault("auth.refresh_token_ttl", "720h")
+	if err := v.ReadInConfig(); err != nil {
+		return nil, fmt.Errorf("read config: %w", err)
+	}
 
-	v.SetDefault("database.host", "localhost")
-	v.SetDefault("database.port", 5432)
-	v.SetDefault("database.user", "wim_user")
-	v.SetDefault("database.password", "wim_pass")
-	v.SetDefault("database.database", "warehouse_inventory")
-	v.SetDefault("database.ssl_mode", "disable")
-	v.SetDefault("database.max_conns", 25)
-	v.SetDefault("database.connect_retries", 6)
-	v.SetDefault("database.connect_retry_initial_delay", "1s")
-	v.SetDefault("database.connect_retry_max_delay", "30s")
+	// Bind ENV
+	bindEnv(v)
 
-	v.SetDefault("log_level", "info")
-	v.SetDefault("worker.pool_size", 5)
-	v.SetDefault("worker.queue_size", 100)
-	v.SetDefault("worker.retry_count", 3)
-	v.SetDefault("worker.retry_delay", "1s")
-	v.SetDefault("worker.batch_size", 10)
+	// Convert Kafka brokers
+	if brokers := v.GetString("kafka.brokers"); brokers != "" {
+		v.Set("kafka.brokers", strings.Split(brokers, ","))
+	}
 
-	v.SetDefault("kafka.batch_size", 100)
-	v.SetDefault("kafka.batch_timeout", "100ms")
-	v.SetDefault("kafka.required_acks", 1)
-	v.SetDefault("kafka.compression", "snappy")
-	v.SetDefault("kafka.idempotent", true)
-	v.SetDefault("kafka.min_bytes", 1024)
-	v.SetDefault("kafka.max_bytes", 10485760) // 10MB
-	v.SetDefault("kafka.max_wait", "500ms")
-	v.SetDefault("kafka.auto_commit", false)
-	v.SetDefault("kafka.commit_interval", "5s")
-	v.SetDefault("kafka.enable_sasl", false)
-	v.SetDefault("kafka.sasl_mechanism", "plain")
-	v.SetDefault("kafka.enable_tls", false)
+	// Validate
+	if err := validate(v); err != nil {
+		return nil, err
+	}
 
-	_ = v.ReadInConfig()
+	return buildConfig(v), nil
+}
 
-	v.SetConfigFile(".env")
-	v.SetConfigType("env")
-	_ = v.MergeInConfig()
+/*
+========================
+ENV BINDING
+========================
+*/
 
-	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	v.AutomaticEnv()
-	_ = v.BindEnv("database.url", "DATABASE_URL")
-	_ = v.BindEnv("kafka.brokers", "KAFKA_BROKERS")
+func bindEnv(v *viper.Viper) {
+	// DATABASE
+	v.BindEnv("database.host", "POSTGRES_HOST")
+	v.BindEnv("database.port", "POSTGRES_PORT")
+	v.BindEnv("database.user", "POSTGRES_USER")
+	v.BindEnv("database.password", "POSTGRES_PASSWORD")
+	v.BindEnv("database.database", "POSTGRES_DB")
+	v.BindEnv("database.max_conns", "DATABASE_MAX_CONNS")
+	v.BindEnv("database.url","DATABASE_URL")
 
+	// REDIS
+	v.BindEnv("redis.host", "REDIS_HOST")
+	v.BindEnv("redis.port", "REDIS_PORT")
+	v.BindEnv("redis.password", "REDIS_PASSWORD")
+	v.BindEnv("redis.db", "REDIS_DB")
+
+	// AUTH
+	v.BindEnv("auth.jwt_secret", "AUTH_JWT_SECRET")
+	v.BindEnv("auth.jwt_issuer", "AUTH_JWT_ISSUER")
+
+	// KAFKA
+	v.BindEnv("kafka.brokers", "KAFKA_BROKERS")
+	v.BindEnv("kafka.topic", "KAFKA_TOPIC")
+	v.BindEnv("kafka.group_id", "KAFKA_GROUP_ID")
+
+	// OPTIONAL
+	v.BindEnv("server.host", "SERVER_HOST")
+	v.BindEnv("server.port", "SERVER_PORT")
+	v.BindEnv("log_level", "LOG_LEVEL")
+}
+
+/*
+========================
+VALIDATION
+========================
+*/
+
+func validate(v *viper.Viper) error {
+	required := map[string]string{
+		"database.host":      "POSTGRES_HOST",
+		"database.port":      "POSTGRES_PORT",
+		"database.user":      "POSTGRES_USER",
+		"database.password":  "POSTGRES_PASSWORD",
+		"database.database":  "POSTGRES_DB",
+		"database.max_conns": "DATABASE_MAX_CONNS",
+
+		"redis.host":     "REDIS_HOST",
+		"redis.port":     "REDIS_PORT",
+		"redis.password": "REDIS_PASSWORD",
+
+		"auth.jwt_secret": "AUTH_JWT_SECRET",
+		"auth.jwt_issuer": "AUTH_JWT_ISSUER",
+
+		"kafka.brokers":  "KAFKA_BROKERS",
+		"kafka.topic":    "KAFKA_TOPIC",
+		"kafka.group_id": "KAFKA_GROUP_ID",
+	}
+
+	for key, env := range required {
+		if !v.IsSet(key) || v.Get(key) == "" {
+			return fmt.Errorf("missing required config (%s) from env: %s", key, env)
+		}
+	}
+
+	if v.GetInt("database.max_conns") < 1 {
+		return fmt.Errorf("database.max_conns must be >= 1")
+	}
+
+	return nil
+}
+
+/*
+========================
+BUILD CONFIG
+========================
+*/
+
+func buildConfig(v *viper.Viper) *Config {
 	return &Config{
 		Server: ServerConfig{
-			Port: v.GetInt("server.port"),
 			Host: v.GetString("server.host"),
+			Port: v.GetInt("server.port"),
 		},
 		Auth: AuthConfig{
 			JWTSecret:       v.GetString("auth.jwt_secret"),
@@ -174,7 +241,6 @@ func Load() *Config {
 			RefreshTokenTTL: v.GetDuration("auth.refresh_token_ttl"),
 		},
 		Database: DatabaseConfig{
-			URL:      v.GetString("database.url"),
 			Host:     v.GetString("database.host"),
 			Port:     v.GetInt("database.port"),
 			User:     v.GetString("database.user"),

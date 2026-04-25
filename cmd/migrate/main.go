@@ -12,7 +12,10 @@ import (
 
 func main() {
 	ctx := context.Background()
-	cfg := config.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		panic(fmt.Errorf("failed to load config: %w", err))
+	}
 
 	db, err := dbutil.OpenSQLConnection(ctx, cfg.Database)
 	if err != nil {

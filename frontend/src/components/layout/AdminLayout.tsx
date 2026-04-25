@@ -1,5 +1,5 @@
 import * as React from "react"
-import { useLocation } from "react-router-dom"
+import { useLocation, Link } from "react-router-dom"
 import {
   LayoutDashboard,
   Users,
@@ -11,21 +11,16 @@ import {
   Menu,
   X,
   LogOut,
-  ChevronLeft,
   ShoppingCart,
-  Bell,
-  Search,
 } from "lucide-react"
 import { cn } from "@/utils"
 import { useLogout } from "@/features/auth/hooks"
-import { Input } from "@/components/ui/Input"
-import { Button } from "@/components/ui/Button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
 interface SidebarItem {
   name: string
   href: string
-  icon: React.ComponentType<{ className?: string }>
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
 }
 
 const navigation: SidebarItem[] = [
@@ -41,9 +36,7 @@ const navigation: SidebarItem[] = [
 const Sidebar: React.FC<{
   open: boolean
   setOpen: (open: boolean) => void
-  collapsed: boolean
-  setCollapsed: (collapsed: boolean) => void
-}> = ({ open, setOpen, collapsed, setCollapsed }) => {
+}> = ({ open, setOpen }) => {
   const location = useLocation()
   const logout = useLogout()
 
@@ -58,102 +51,73 @@ const Sidebar: React.FC<{
 
       <aside
         className={cn(
-          "fixed left-0 top-0 z-50 h-screen bg-background border-r border-border transition-all duration-300",
-          collapsed && "w-16",
-          !collapsed && "w-64",
-          open && "translate-x-0",
-          !open && "-translate-x-full lg:translate-x-0"
+          "fixed left-0 top-0 z-50 h-screen bg-ink flex flex-col transition-transform duration-300 w-[200px]",
+          open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
-        <div className="flex h-full flex-col">
-          <div className="flex h-16 items-center justify-between border-b border-border px-4">
-            <div
-              className={cn(
-                "flex items-center gap-3 font-bold text-lg overflow-hidden whitespace-nowrap transition-all",
-                collapsed && "w-0 opacity-0",
-                !collapsed && "w-auto opacity-100"
-              )}
-            >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                <Package className="h-4 w-4 text-primary-foreground" />
-              </div>
-              <span className="text-foreground">WIM</span>
+        {/* Brand */}
+        <div className="flex items-center gap-2 h-[52px] px-4 shrink-0">
+          <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] bg-accent-green">
+            <Package className="h-3 w-3 text-white" />
+          </div>
+          <div className="flex flex-col justify-center">
+            <span className="text-white font-medium text-[13px] leading-tight">WIM</span>
+            <span className="text-white/50 text-[9px] uppercase tracking-wider leading-tight">Warehouse</span>
+          </div>
+          <button
+            onClick={() => setOpen(false)}
+            className="lg:hidden ml-auto flex items-center justify-center h-7 w-7 rounded-lg text-white/50"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <ScrollArea className="flex-1 px-3 py-2">
+          <div className="mb-2 px-2">
+            <span className="text-[9px] text-white/30 uppercase tracking-widest font-medium">Menu</span>
+          </div>
+          <ul className="space-y-0.5">
+            {navigation.map((item) => {
+              const isActive = location.pathname === item.href
+              const Icon = item.icon
+              return (
+                <li key={item.name}>
+                  <Link
+                    to={item.href}
+                    className={cn(
+                      "flex items-center gap-2 rounded-[6px] px-2 py-[7px] text-[13px] font-medium transition-colors relative",
+                      isActive
+                        ? "bg-white/10 text-white"
+                        : "text-white/50 hover:bg-white/5 hover:text-white"
+                    )}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" strokeWidth={2.5} />
+                    <span className="truncate">{item.name}</span>
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        </ScrollArea>
+
+        {/* Footer */}
+        <div className="border-t-[0.5px] border-white/10 p-3 shrink-0">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="h-[26px] w-[26px] shrink-0 rounded-[6px] bg-accent-green flex items-center justify-center">
+              <span className="text-[11px] font-medium text-white">AK</span>
             </div>
-
-            <button
-              onClick={() => setCollapsed(!collapsed)}
-              className={cn(
-                "hidden lg:flex items-center justify-center h-7 w-7 rounded-lg hover:bg-muted text-muted-foreground transition-colors",
-                collapsed && "rotate-180"
-              )}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-
-            <button
-              onClick={() => setOpen(false)}
-              className="lg:hidden flex items-center justify-center h-7 w-7 rounded-lg hover:bg-muted text-muted-foreground"
-            >
-              <X className="h-4 w-4" />
-            </button>
+            <div className="flex flex-col overflow-hidden">
+              <span className="text-[12px] font-medium text-white/90 truncate">Admin User</span>
+              <span className="text-[10px] text-white/50 truncate">Administrator</span>
+            </div>
           </div>
-
-          <ScrollArea className="flex-1 p-3">
-            <ul className="space-y-1">
-              {navigation.map((item) => {
-                const isActive = location.pathname === item.href
-                const Icon = item.icon
-                return (
-                  <li key={item.name}>
-                    <a
-                      href={item.href}
-                      className={cn(
-                        "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                        isActive
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                        collapsed && "justify-center px-2"
-                      )}
-                      title={collapsed ? item.name : undefined}
-                    >
-                      <Icon className="h-5 w-5 flex-shrink-0" />
-                      <span
-                        className={cn(
-                          "overflow-hidden whitespace-nowrap transition-all",
-                          collapsed && "w-0 opacity-0",
-                          !collapsed && "w-auto opacity-100"
-                        )}
-                      >
-                        {item.name}
-                      </span>
-                    </a>
-                  </li>
-                )
-              })}
-            </ul>
-          </ScrollArea>
-
-          <div className="border-t border-border p-3">
-            <button
-              onClick={logout}
-              className={cn(
-                "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-200 w-full",
-                collapsed && "justify-center px-2"
-              )}
-              title={collapsed ? "Logout" : undefined}
-            >
-              <LogOut className="h-5 w-5 flex-shrink-0" />
-              <span
-                className={cn(
-                  "overflow-hidden whitespace-nowrap transition-all",
-                  collapsed && "w-0 opacity-0",
-                  !collapsed && "w-auto opacity-100"
-                )}
-              >
-                Logout
-              </span>
-            </button>
-          </div>
+          <button
+            onClick={logout}
+            className="flex items-center gap-2 rounded-[6px] px-2 py-[7px] text-[13px] font-medium text-white/50 hover:bg-white/5 hover:text-white transition-colors w-full"
+          >
+            <LogOut className="h-4 w-4 shrink-0" strokeWidth={2.5} />
+            <span>Logout</span>
+          </button>
         </div>
       </aside>
     </>
@@ -164,39 +128,16 @@ const Header: React.FC<{
   onMenuClick: () => void
 }> = ({ onMenuClick }) => {
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-background/80 backdrop-blur px-6">
+    <header className="sticky top-0 z-30 flex h-[52px] items-center gap-4 border-b-[0.5px] border-border-default bg-white px-4 lg:px-6 shrink-0">
       <button
         onClick={onMenuClick}
-        className="lg:hidden flex items-center justify-center h-9 w-9 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
+        className="lg:hidden flex items-center justify-center h-8 w-8 rounded-[7px] text-ink-3 hover:bg-surface-2 transition-colors"
       >
-        <Menu className="h-5 w-5" />
+        <Menu className="h-4 w-4" />
       </button>
 
       <div className="flex items-center gap-4 flex-1">
-        <div className="relative w-full max-w-sm hidden sm:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search..."
-            className="pl-9 bg-muted/50 border-transparent focus:bg-background"
-          />
-        </div>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary" />
-        </Button>
-        <div className="h-8 w-px bg-border mx-2" />
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-            <span className="text-xs font-semibold text-primary">A</span>
-          </div>
-          <div className="hidden md:block">
-            <p className="text-sm font-medium text-foreground">Admin</p>
-            <p className="text-xs text-muted-foreground">Administrator</p>
-          </div>
-        </div>
+        <span className="text-[14px] font-medium text-ink">Overview</span>
       </div>
     </header>
   )
@@ -206,28 +147,19 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
-  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false)
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-surface-2 flex flex-col font-medium text-ink">
       <Sidebar
         open={sidebarOpen}
         setOpen={setSidebarOpen}
-        collapsed={sidebarCollapsed}
-        setCollapsed={setSidebarCollapsed}
       />
-
-      <div
-        className={cn(
-          "transition-all duration-300",
-          sidebarCollapsed && "lg:pl-16",
-          !sidebarCollapsed && "lg:pl-64"
-        )}
-      >
+      <div className="flex-1 flex flex-col lg:ml-[200px] transition-all duration-300">
         <Header onMenuClick={() => setSidebarOpen(true)} />
-
-        <main className="p-6 lg:p-8">
-          <div className="mx-auto max-w-7xl space-y-6">{children}</div>
+        <main className="flex-1 p-4 lg:p-6 overflow-auto">
+          <div className="w-full">
+            {children}
+          </div>
         </main>
       </div>
     </div>

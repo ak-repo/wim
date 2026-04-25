@@ -1,34 +1,13 @@
 import * as React from "react"
 import { useUsers } from "@/features/auth/hooks"
 import { useUserRoles } from "@/features/userRoles/hooks"
-import { Button } from "@/components/ui/Button"
-import { Input } from "@/components/ui/Input"
-import { Badge } from "@/components/ui/Badge"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Tabs } from "@/components/ui/Tabs"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/Table"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/Card"
 import { UserFormDialog } from "@/features/users/components/UserFormDialog"
 import { UserDeleteDialog } from "@/features/users/components/UserDeleteDialog"
 import { UserRoleFormDialog } from "@/features/userRoles/components/UserRoleFormDialog"
 import { UserRoleDeleteDialog } from "@/features/userRoles/components/UserRoleDeleteDialog"
 import type { User } from "@/features/auth/types"
 import type { UserRole } from "@/features/userRoles/types"
-import { Plus, Search, Pencil, Trash2, Users, Shield, BadgeCheck } from "lucide-react"
-import { formatDate } from "@/utils"
+import { Plus, Search, Pencil, Trash2, Users, BadgeCheck } from "lucide-react"
 
 export default function UsersPage() {
   const [search, setSearch] = React.useState("")
@@ -92,289 +71,200 @@ export default function UsersPage() {
       role.name.toLowerCase().includes(search.toLowerCase())
     ) || []
 
-  const getRoleBadgeVariant = (role: string) => {
-    switch (role) {
-      case "super_admin":
-        return "destructive"
-      case "admin":
-        return "default"
-      case "manager":
-        return "secondary"
-      default:
-        return "outline"
-    }
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">User Master</h1>
-          <p className="text-muted-foreground mt-1">Manage users and roles in one place.</p>
+          <h1 className="text-[20px] font-medium tracking-tight text-ink">User Master</h1>
+          <p className="text-[12px] text-ink-3 mt-0.5">Manage users and roles in one place.</p>
         </div>
         <div className="flex items-center gap-3">
-          <Tabs
-            value={activeTab}
-            onChange={setActiveTab}
-            tabs={[
-              { id: "users", label: "Users", icon: Users },
-              { id: "roles", label: "Roles", icon: BadgeCheck },
-            ]}
-          />
-          <Button
+          <div className="flex bg-white rounded-[7px] border-[0.5px] border-border-default p-1">
+            <button
+              onClick={() => setActiveTab("users")}
+              className={`px-3 py-1.5 text-[12px] font-medium rounded-[5px] transition-colors flex items-center gap-1.5 ${
+                activeTab === "users" ? "bg-surface-2 text-ink" : "text-ink-3 hover:text-ink-2"
+              }`}
+            >
+              <Users className="h-3.5 w-3.5" />
+              Users
+            </button>
+            <button
+              onClick={() => setActiveTab("roles")}
+              className={`px-3 py-1.5 text-[12px] font-medium rounded-[5px] transition-colors flex items-center gap-1.5 ${
+                activeTab === "roles" ? "bg-surface-2 text-ink" : "text-ink-3 hover:text-ink-2"
+              }`}
+            >
+              <BadgeCheck className="h-3.5 w-3.5" />
+              Roles
+            </button>
+          </div>
+          <button
             onClick={activeTab === "users" ? handleCreate : handleCreateRole}
-            size="lg"
+            className="flex items-center gap-2 bg-ink text-white rounded-[7px] px-3 py-1.5 text-[12px] font-medium hover:bg-ink-2 transition-colors"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-3.5 w-3.5" />
             {activeTab === "users" ? "Add User" : "Add Role"}
-          </Button>
+          </button>
         </div>
       </div>
 
-      {activeTab === "users" ? (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>User Management</CardTitle>
-                <CardDescription>
-                  Search and manage user accounts
-                </CardDescription>
-              </div>
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                <Shield className="h-4 w-4 text-primary" />
-              </div>
-            </div>
-            <div className="flex items-center gap-4 mt-4">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name or email..."
-                  className="pl-9 bg-muted/50 border-transparent focus:bg-background"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell><Skeleton className="h-4 w-40" /></TableCell>
-                      <TableCell><Skeleton className="h-6 w-20" /></TableCell>
-                      <TableCell><Skeleton className="h-6 w-16" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                      <TableCell>
-                        <div className="flex justify-end gap-2">
-                          <Skeleton className="h-8 w-8" />
-                          <Skeleton className="h-8 w-8" />
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
+      <div className="bg-white border-[0.5px] border-border-default rounded-[10px] overflow-hidden flex flex-col">
+        <div className="p-[14px_16px] border-b-[0.5px] border-border-default flex items-center justify-between gap-4">
+          <div className="relative flex-1 max-w-[240px]">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-ink-3" />
+            <input
+              type="text"
+              placeholder={activeTab === "users" ? "Search users..." : "Search roles..."}
+              className="h-[30px] w-full bg-surface-2 border-[0.5px] border-border-default rounded-[7px] pl-8 pr-3 text-[12px] text-ink placeholder:text-ink-3 focus:outline-none focus:border-border-2"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
+        
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-[13px]">
+            <thead>
+              <tr className="border-b-[0.5px] border-border-default">
+                <th className="font-medium text-ink-3 px-4 py-3 whitespace-nowrap">
+                  {activeTab === "users" ? "User" : "Name"}
+                </th>
+                <th className="font-medium text-ink-3 px-4 py-3 whitespace-nowrap">
+                  {activeTab === "users" ? "Role" : "Ref Code"}
+                </th>
+                <th className="font-medium text-ink-3 px-4 py-3 whitespace-nowrap">Status</th>
+                {activeTab === "users" && (
+                  <th className="font-medium text-ink-3 px-4 py-3 whitespace-nowrap">Created</th>
+                )}
+                <th className="font-medium text-ink-3 px-4 py-3 text-right whitespace-nowrap">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {activeTab === "users" ? (
+                isLoading ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-[12px] text-ink-3">Loading users...</td>
+                  </tr>
                 ) : filteredUsers.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="h-40">
-                      <div className="flex flex-col items-center justify-center text-center">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-3">
-                          <Users className="h-6 w-6 text-muted-foreground" />
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center">
+                      <div className="flex flex-col items-center justify-center">
+                        <div className="flex h-[36px] w-[36px] items-center justify-center rounded-[10px] bg-surface-2 mb-3">
+                          <Users className="h-5 w-5 text-ink-3" />
                         </div>
-                        <p className="text-sm font-medium text-foreground">No users found</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {search ? "Try adjusting your search" : "Add a user to get started"}
-                        </p>
-                        {!search && (
-                          <Button variant="outline" size="sm" className="mt-3" onClick={handleCreate}>
-                            <Plus className="h-3 w-3 mr-1" />
-                            Add User
-                          </Button>
-                        )}
+                        <p className="text-[12px] text-ink-3">No users found</p>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 ) : (
                   filteredUsers.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>
+                    <tr key={user.id} className="border-b-[0.5px] border-border-default last:border-0 hover:bg-surface-2/50 transition-colors">
+                      <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                            <span className="text-xs font-semibold text-primary uppercase">
+                          <div className="h-[32px] w-[32px] rounded-full bg-accent-bg flex shrink-0 items-center justify-center">
+                            <span className="text-[12px] font-medium text-accent-green uppercase">
                               {user.username.charAt(0)}
                             </span>
                           </div>
-                          <div>
-                            <p className="font-medium text-foreground">{user.username}</p>
-                            <p className="text-xs text-muted-foreground">{user.email}</p>
+                          <div className="flex flex-col">
+                            <span className="font-medium text-ink">{user.username}</span>
+                            <span className="text-[11px] text-ink-3">{user.email}</span>
                           </div>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getRoleBadgeVariant(user.role)}>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                          user.role === 'super_admin' ? 'bg-accent-bg text-accent-green' : 'bg-surface-2 text-ink-2'
+                        }`}>
                           {user.role.replace("_", " ")}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={user.isActive ? "success" : "secondary"}>
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                          user.isActive ? 'bg-accent-bg text-accent-green' : 'bg-surface-2 text-ink-3'
+                        }`}>
                           {user.isActive ? "Active" : "Inactive"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {formatDate(user.created_at)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-[12px] text-ink-3">
+                        {new Date(user.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-3">
+                          <button
                             onClick={() => handleEdit(user)}
-                            className="h-8 w-8"
+                            className="text-ink-3 hover:text-ink transition-colors"
                           >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
+                            <Pencil className="h-[15px] w-[15px]" />
+                          </button>
+                          <button
                             onClick={() => handleDelete(user)}
-                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            className="text-ink-3 hover:text-coral transition-colors"
                           >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                            <Trash2 className="h-[15px] w-[15px]" />
+                          </button>
                         </div>
-                      </TableCell>
-                    </TableRow>
+                      </td>
+                    </tr>
                   ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>User Roles</CardTitle>
-                <CardDescription>
-                  Manage role definitions for access control
-                </CardDescription>
-              </div>
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                <BadgeCheck className="h-4 w-4 text-primary" />
-              </div>
-            </div>
-            <div className="flex items-center gap-4 mt-4">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by role name..."
-                  className="pl-9 bg-muted/50 border-transparent focus:bg-background"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Ref Code</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rolesLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell><Skeleton className="h-4 w-40" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                      <TableCell><Skeleton className="h-6 w-16" /></TableCell>
-                      <TableCell>
-                        <div className="flex justify-end gap-2">
-                          <Skeleton className="h-8 w-8" />
-                          <Skeleton className="h-8 w-8" />
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                )
+              ) : (
+                rolesLoading ? (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-8 text-center text-[12px] text-ink-3">Loading roles...</td>
+                  </tr>
                 ) : filteredRoles.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="h-40">
-                      <div className="flex flex-col items-center justify-center text-center">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-3">
-                          <BadgeCheck className="h-6 w-6 text-muted-foreground" />
+                  <tr>
+                    <td colSpan={4} className="px-4 py-8 text-center">
+                      <div className="flex flex-col items-center justify-center">
+                        <div className="flex h-[36px] w-[36px] items-center justify-center rounded-[10px] bg-surface-2 mb-3">
+                          <BadgeCheck className="h-5 w-5 text-ink-3" />
                         </div>
-                        <p className="text-sm font-medium text-foreground">No roles found</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {search ? "Try adjusting your search" : "Add a role to get started"}
-                        </p>
-                        {!search && (
-                          <Button variant="outline" size="sm" className="mt-3" onClick={handleCreateRole}>
-                            <Plus className="h-3 w-3 mr-1" />
-                            Add Role
-                          </Button>
-                        )}
+                        <p className="text-[12px] text-ink-3">No roles found</p>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 ) : (
                   filteredRoles.map((role) => (
-                    <TableRow key={role.id}>
-                      <TableCell>
-                        <p className="font-medium text-foreground">{role.name}</p>
-                      </TableCell>
-                      <TableCell>
-                        <span className="font-mono text-xs font-medium text-muted-foreground">
+                    <tr key={role.id} className="border-b-[0.5px] border-border-default last:border-0 hover:bg-surface-2/50 transition-colors">
+                      <td className="px-4 py-3 font-medium text-ink">{role.name}</td>
+                      <td className="px-4 py-3">
+                        <span className="font-mono text-[11px] text-ink-3 bg-surface-2 px-1.5 py-0.5 rounded">
                           {role.refCode}
                         </span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={role.isActive ? "success" : "secondary"}>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                          role.isActive ? 'bg-accent-bg text-accent-green' : 'bg-surface-2 text-ink-3'
+                        }`}>
                           {role.isActive ? "Active" : "Inactive"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-3">
+                          <button
                             onClick={() => handleEditRole(role)}
-                            className="h-8 w-8"
+                            className="text-ink-3 hover:text-ink transition-colors"
                           >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
+                            <Pencil className="h-[15px] w-[15px]" />
+                          </button>
+                          <button
                             onClick={() => handleDeleteRole(role)}
-                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            className="text-ink-3 hover:text-coral transition-colors"
                           >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                            <Trash2 className="h-[15px] w-[15px]" />
+                          </button>
                         </div>
-                      </TableCell>
-                    </TableRow>
+                      </td>
+                    </tr>
                   ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
+                )
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       <UserFormDialog
         user={selectedUser}

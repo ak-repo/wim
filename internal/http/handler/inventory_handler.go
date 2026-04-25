@@ -3,9 +3,9 @@ package handler
 import (
 	"net/http"
 
+	"github.com/ak-repo/wim/internal/httpx"
 	"github.com/ak-repo/wim/internal/model"
 	"github.com/ak-repo/wim/internal/service"
-	"github.com/ak-repo/wim/pkg/response"
 	"github.com/ak-repo/wim/pkg/utils"
 )
 
@@ -24,11 +24,11 @@ func (h *InventoryHandler) AdjustInventory(w http.ResponseWriter, r *http.Reques
 	}
 
 	if err := h.services.Inventory.AdjustInventory(r.Context(), &req); err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
-	response.WriteJSON(w, http.StatusOK, map[string]string{
+	httpx.WriteJSON(w, http.StatusOK, map[string]string{
 		"message": "inventory adjusted",
 	})
 }
@@ -41,11 +41,11 @@ func (h *InventoryHandler) GetInventoryByID(w http.ResponseWriter, r *http.Reque
 
 	item, err := h.services.Inventory.GetInventoryByID(r.Context(), id)
 	if err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
-	response.WriteJSON(w, http.StatusOK, item)
+	httpx.WriteJSON(w, http.StatusOK, item)
 }
 
 func (h *InventoryHandler) ListInventory(w http.ResponseWriter, r *http.Request) {
@@ -62,13 +62,13 @@ func (h *InventoryHandler) ListInventory(w http.ResponseWriter, r *http.Request)
 
 	data, count, err := h.services.Inventory.ListInventory(r.Context(), params)
 	if err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
 	totalPage := (count + params.Limit - 1) / params.Limit
 
-	response.WriteJSON(w, http.StatusOK, map[string]any{
+	httpx.WriteJSON(w, http.StatusOK, map[string]any{
 		"data":         data,
 		"total_count":  count,
 		"total_page":   totalPage,
@@ -94,13 +94,13 @@ func (h *InventoryHandler) ListStockMovements(w http.ResponseWriter, r *http.Req
 
 	data, count, err := h.services.Inventory.ListStockMovements(r.Context(), params)
 	if err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
 	totalPage := (count + params.Limit - 1) / params.Limit
 
-	response.WriteJSON(w, http.StatusOK, map[string]any{
+	httpx.WriteJSON(w, http.StatusOK, map[string]any{
 		"data":         data,
 		"total_count":  count,
 		"total_page":   totalPage,

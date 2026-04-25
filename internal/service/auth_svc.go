@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/ak-repo/wim/internal/constants"
+	apperrors "github.com/ak-repo/wim/internal/errs"
 	"github.com/ak-repo/wim/internal/model"
 	"github.com/ak-repo/wim/internal/repository"
 	"github.com/ak-repo/wim/pkg/auth"
-	apperrors "github.com/ak-repo/wim/pkg/errors"
 )
 
 type AuthService interface {
@@ -56,7 +56,7 @@ func (s *authService) Register(ctx context.Context, input *model.RegisterRequest
 
 	username := strings.TrimSpace(input.Username)
 	email := input.Email
-	role := constants.RoleWorker
+	role := constants.RoleAdmin
 	isActive := true
 	user := &model.UserRequest{
 		Username:     &username,

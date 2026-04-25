@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 
-	"github.com/ak-repo/wim/pkg/response"
+	"github.com/ak-repo/wim/internal/httpx"
 )
 
 type HealthHandler struct{}
@@ -13,5 +13,5 @@ func NewHealthHandler() *HealthHandler {
 }
 
 func (h *HealthHandler) Check(w http.ResponseWriter, r *http.Request) {
-	response.WriteJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+	httpx.WriteJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }

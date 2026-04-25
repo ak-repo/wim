@@ -126,7 +126,7 @@ export const InventoryAdjustDialog: React.FC<InventoryAdjustDialogProps> = ({
                 required
               >
                 <option value="">Select location</option>
-                {locationsData?.data
+                {(locationsData?.data ?? [])
                   .filter((l) => !formData.warehouseId || l.warehouseId === formData.warehouseId)
                   .map((l) => (
                     <option key={l.id} value={l.id}>

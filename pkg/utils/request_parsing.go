@@ -2,13 +2,14 @@ package utils
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 
-	apperrors "github.com/ak-repo/wim/pkg/errors"
-	"github.com/ak-repo/wim/pkg/response"
+	"github.com/ak-repo/wim/internal/errs"
+	"github.com/ak-repo/wim/internal/httpx"
 	"github.com/go-chi/chi"
 )
 
@@ -24,7 +25,7 @@ func DecodeJSON(w http.ResponseWriter, r *http.Request, dst any) bool {
 	decoder.DisallowUnknownFields()
 
 	if err := decoder.Decode(dst); err != nil {
-		response.WriteError(w, http.StatusBadRequest, apperrors.CodeInvalidInput, "invalid request body")
+		httpx.WriteError(w, r, errs.E("utils/DecodeJSON", errs.InvalidRequest, errors.New("invalid request body"), errs.WithCode(errs.CodeInvalidRequest)))
 		return false
 	}
 
@@ -35,7 +36,7 @@ func DecodeJSON(w http.ResponseWriter, r *http.Request, dst any) bool {
 func ParseID(w http.ResponseWriter, r *http.Request) (int, bool) {
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || id <= 0 {
-		response.WriteError(w, http.StatusBadRequest, apperrors.CodeInvalidInput, "invalid product id")
+		httpx.WriteError(w, r, errs.E("utils/ParseID", errs.InvalidRequest, errors.New("invalid id"), errs.WithCode(errs.CodeInvalidRequest)))
 		return 0, false
 	}
 	return id, true

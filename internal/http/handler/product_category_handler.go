@@ -3,9 +3,9 @@ package handler
 import (
 	"net/http"
 
+	"github.com/ak-repo/wim/internal/httpx"
 	"github.com/ak-repo/wim/internal/model"
 	"github.com/ak-repo/wim/internal/service"
-	"github.com/ak-repo/wim/pkg/response"
 	"github.com/ak-repo/wim/pkg/utils"
 )
 
@@ -25,11 +25,11 @@ func (h *ProductCategoryHandler) CreateProductCategory(w http.ResponseWriter, r 
 
 	id, err := h.services.ProductCategory.CreateProductCategory(r.Context(), &req)
 	if err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
-	response.WriteJSON(w, http.StatusCreated, map[string]int{"id": id})
+	httpx.WriteJSON(w, http.StatusCreated, map[string]int{"id": id})
 }
 
 func (h *ProductCategoryHandler) GetProductCategoryByID(w http.ResponseWriter, r *http.Request) {
@@ -40,11 +40,11 @@ func (h *ProductCategoryHandler) GetProductCategoryByID(w http.ResponseWriter, r
 
 	category, err := h.services.ProductCategory.GetProductCategoryByID(r.Context(), id)
 	if err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
-	response.WriteJSON(w, http.StatusOK, category)
+	httpx.WriteJSON(w, http.StatusOK, category)
 }
 
 func (h *ProductCategoryHandler) UpdateProductCategory(w http.ResponseWriter, r *http.Request) {
@@ -59,11 +59,11 @@ func (h *ProductCategoryHandler) UpdateProductCategory(w http.ResponseWriter, r 
 	}
 
 	if err := h.services.ProductCategory.UpdateProductCategory(r.Context(), id, &req); err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
-	response.WriteJSON(w, http.StatusOK, map[string]string{"message": "product category updated"})
+	httpx.WriteJSON(w, http.StatusOK, map[string]string{"message": "product category updated"})
 }
 
 func (h *ProductCategoryHandler) DeleteProductCategory(w http.ResponseWriter, r *http.Request) {
@@ -73,11 +73,11 @@ func (h *ProductCategoryHandler) DeleteProductCategory(w http.ResponseWriter, r 
 	}
 
 	if err := h.services.ProductCategory.DeleteProductCategory(r.Context(), id); err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
-	response.WriteJSON(w, http.StatusOK, map[string]string{"message": "product category deleted"})
+	httpx.WriteJSON(w, http.StatusOK, map[string]string{"message": "product category deleted"})
 }
 
 func (h *ProductCategoryHandler) ListProductCategories(w http.ResponseWriter, r *http.Request) {
@@ -90,12 +90,12 @@ func (h *ProductCategoryHandler) ListProductCategories(w http.ResponseWriter, r 
 
 	data, count, err := h.services.ProductCategory.ListProductCategories(r.Context(), params)
 	if err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
 	totalPage := (count + params.Limit - 1) / params.Limit
-	response.WriteJSON(w, http.StatusOK, map[string]any{
+	httpx.WriteJSON(w, http.StatusOK, map[string]any{
 		"data":         data,
 		"total_count":  count,
 		"total_page":   totalPage,

@@ -13,16 +13,29 @@ import LocationsPage from "@/pages/Locations"
 import InventoryPage from "@/pages/Inventory"
 import SalesOrdersPage from "@/pages/SalesOrders"
 
-// Protected Route wrapper
+// Protected Route wrapper - with hydration check
 function ProtectedRoute() {
+  const accessToken = localStorage.getItem("accessToken")
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
-  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />
+  
+  console.log("[Router] ProtectedRoute check - isAuthenticated:", isAuthenticated, "hasToken:", !!accessToken)
+  
+  // Must have token in localStorage (even before zustand rehydrates)
+  if (!accessToken) {
+    console.log("[Router] No token - redirecting to login")
+    return <Navigate to="/login" replace />
+  }
+  return <Outlet />
 }
 
 // Public Route wrapper (redirects to dashboard if authenticated)
 function PublicRoute() {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
-  return !isAuthenticated ? <Outlet /> : <Navigate to="/" replace />
+  const accessToken = localStorage.getItem("accessToken")
+  
+  if (!accessToken) {
+    return <Outlet />
+  }
+  return <Navigate to="/" replace />
 }
 
 // Admin Layout wrapper

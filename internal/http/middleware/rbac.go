@@ -1,21 +1,25 @@
 package middleware
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/ak-repo/wim/internal/constants"
+	"github.com/ak-repo/wim/internal/errs"
+	"github.com/ak-repo/wim/internal/httpx"
 	"github.com/ak-repo/wim/pkg/auth"
-	apperrors "github.com/ak-repo/wim/pkg/errors"
-	"github.com/ak-repo/wim/pkg/response"
 )
 
-// Role Based Access Controlw
+const opRBAC errs.Op = "middleware/RBAC.RoleBasedAccessControl"
+
+// Role Based Access Control
 func RoleBasedAccessControl(role string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			claims, ok := auth.ClaimsFromContext(r.Context())
 			if !ok {
-				http.Error(w, "unauthorized", http.StatusUnauthorized)
+				err := errs.E(opRBAC, errs.Unauthorized, errors.New("unauthorized"), errs.WithCode(errs.CodeUnauthorized))
+				httpx.WriteError(w, r, err)
 				return
 			}
 
@@ -24,7 +28,8 @@ func RoleBasedAccessControl(role string) func(http.Handler) http.Handler {
 				return
 			}
 			if claims.Role != role {
-				response.WriteError(w, http.StatusForbidden, apperrors.CodeForbidden, "you are not authorized to access this resource")
+				err := errs.E(opRBAC, errs.Forbidden, errors.New("you are not authorized to access this resource"), errs.WithCode(errs.CodeForbidden))
+				httpx.WriteError(w, r, err)
 				return
 			}
 			next.ServeHTTP(w, r)

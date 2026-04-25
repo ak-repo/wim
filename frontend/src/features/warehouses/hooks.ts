@@ -1,14 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { warehouseService } from "@/features/warehouses/services"
+import { useAuthStore } from "@/stores/authStore"
 import type {
   UpdateWarehouseRequest,
   WarehouseParams,
 } from "@/features/warehouses/types"
 
 export const useWarehouses = (params: WarehouseParams) => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  const hasToken = !!localStorage.getItem("accessToken")
+  console.log("[useWarehouses] enabled check - isAuthenticated:", isAuthenticated, "hasToken:", hasToken)
+  
   return useQuery({
     queryKey: ["warehouses", params],
     queryFn: () => warehouseService.getWarehouses(params),
+    enabled: isAuthenticated && hasToken,
   })
 }
 

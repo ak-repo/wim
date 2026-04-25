@@ -7,7 +7,7 @@ import (
 
 	"github.com/ak-repo/wim/internal/model"
 	"github.com/ak-repo/wim/internal/repository"
-	apperrors "github.com/ak-repo/wim/pkg/errors"
+	apperrors "github.com/ak-repo/wim/internal/errs"
 )
 
 type LocationService interface {

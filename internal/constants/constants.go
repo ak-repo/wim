@@ -1,10 +1,8 @@
 package constants
 
 const (
-	RoleSuperAdmin = "super_admin"
+	RoleSuperAdmin = "super-admin"
 	RoleAdmin      = "admin"
-	RoleManager    = "manager"
-	RoleWorker     = "worker"
 
 	// Movement Types
 	MovementReceipt     = "RECEIPT"

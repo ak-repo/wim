@@ -3,9 +3,9 @@ package handler
 import (
 	"net/http"
 
+	"github.com/ak-repo/wim/internal/httpx"
 	"github.com/ak-repo/wim/internal/model"
 	"github.com/ak-repo/wim/internal/service"
-	"github.com/ak-repo/wim/pkg/response"
 	"github.com/ak-repo/wim/pkg/utils"
 )
 
@@ -25,11 +25,11 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	err := h.services.Auth.Register(r.Context(), &req)
 	if err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
-	response.WriteJSON(w, http.StatusCreated, map[string]string{
+	httpx.WriteJSON(w, http.StatusCreated, map[string]string{
 		"message": "user registered",
 	})
 }
@@ -42,9 +42,9 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	data, err := h.services.Auth.Login(r.Context(), &req)
 	if err != nil {
-		response.WriteServiceError(w, err)
+		httpx.WriteError(w, r, err)
 		return
 	}
 
-	response.WriteJSON(w, http.StatusOK, data)
+	httpx.WriteJSON(w, http.StatusOK, data)
 }

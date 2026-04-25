@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/ak-repo/wim/internal/http/handler"
+	"github.com/ak-repo/wim/internal/httpx"
 	"github.com/ak-repo/wim/pkg/auth"
 	"github.com/go-chi/chi"
 	chiMiddleware "github.com/go-chi/chi/middleware"
@@ -13,7 +14,10 @@ import (
 )
 
 func SetupRoutes(handlers *handler.Handler, tokenManager auth.TokenManager) http.Handler {
+	httpx.ExposeStack = strings.ToLower(os.Getenv("WIM_EXPOSE_STACK")) == "true"
+
 	r := chi.NewRouter()
+	r.Use(httpx.Recover)
 	r.Use(chiMiddleware.Logger)
 
 	allowedOrigins := []string{"http://localhost:5174", "http://localhost:3050"}

@@ -3,53 +3,37 @@ server:
   port: 8090
 
 auth:
-  jwt_secret: change-me-in-production
-  jwt_issuer: wim
-  access_token_ttl: 168h
-  refresh_token_ttl: 720h
+  access_token_ttl: 720h
+  refresh_token_ttl: 2160h
 
 database:
-  url: postgres://wim_user:wim_pass@localhost:5432/warehouse_inventory?sslmode=disable
-  host: localhost
-  port: 5432
-  user: wim_user
-  password: wim_pass
-  database: warehouse_inventory
   ssl_mode: disable
-  max_conns: 25
   connect_retries: 6
   connect_retry_initial_delay: 1s
   connect_retry_max_delay: 30s
 
 redis:
-  host: localhost
-  port: 6379
-  password: ""
   db: 0
 
 kafka:
-  brokers:
-    - localhost:9092
-  topic: warehouse-events
-  group_id: warehouse-worker
-  # Producer settings
   producer_async: true
   batch_size: 100
   batch_timeout: 100ms
   required_acks: 1
   compression: snappy
   idempotent: true
-  # Consumer settings
+
   min_bytes: 1024
   max_bytes: 10485760
   max_wait: 500ms
   auto_commit: false
   commit_interval: 5s
-  # Security (set to true and configure for production)
+
   enable_sasl: false
   sasl_mechanism: plain
   sasl_username: ""
   sasl_password: ""
+
   enable_tls: false
   tls_ca_file: ""
   tls_cert_file: ""

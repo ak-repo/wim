@@ -44,7 +44,7 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, value, onChange, className }) 
             {Icon && <Icon className="h-4 w-4" />}
             {tab.label}
           </button>
-        )}
+        )
       })}
     </div>
   )

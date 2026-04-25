@@ -15,8 +15,10 @@ import (
 func main() {
 	log.Println("Starting WIM Worker")
 
-	// Load configuration
-	cfg := config.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatal("failed to load config", "error", err)
+	}
 
 	// Check if Kafka is configured
 	if len(cfg.Kafka.Brokers) == 0 {

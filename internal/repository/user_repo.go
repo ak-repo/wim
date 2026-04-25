@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/ak-repo/wim/internal/db"
+	"github.com/ak-repo/wim/internal/errs"
 	"github.com/ak-repo/wim/internal/model"
-	apperrors "github.com/ak-repo/wim/pkg/errors"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -40,7 +40,10 @@ func NewUserRepository(database *db.DB) UserRepository {
 	}
 }
 
+const op = "repository/UserRepo"
+
 func (r *userRepository) Create(ctx context.Context, user *model.UserRequest) (int, error) {
+	const opCreate = op + ".Create"
 	query := `
 		INSERT INTO users (
 			 ref_code, username, email, password_hash, role, contact, is_active, created_at, updated_at
@@ -62,9 +65,9 @@ func (r *userRepository) Create(ctx context.Context, user *model.UserRequest) (i
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			return 0, apperrors.ErrAlreadyExists
+			return 0, errs.E(opCreate, errs.Conflict, errs.ErrAlreadyExists)
 		}
-		return 0, apperrors.Wrap(err, apperrors.CodeDatabase, "failed to create user")
+		return 0, errs.E(opCreate, errs.Database, err)
 	}
 
 	return id, nil
@@ -85,26 +88,29 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*model.U
 }
 
 func (r *userRepository) ExistsByEmail(ctx context.Context, email string) (bool, error) {
+	const opExists = op + ".ExistsByEmail"
 	var exists bool
 	err := r.db.Pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)`, email).Scan(&exists)
 	if err != nil {
-		return false, apperrors.Wrap(err, apperrors.CodeDatabase, "failed to check user by email")
+		return false, errs.E(opExists, errs.Database, err)
 	}
 
 	return exists, nil
 }
 
 func (r *userRepository) ExistsByUsername(ctx context.Context, username string) (bool, error) {
+	const opExists = op + ".ExistsByUsername"
 	var exists bool
 	err := r.db.Pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users WHERE username = $1)`, username).Scan(&exists)
 	if err != nil {
-		return false, apperrors.Wrap(err, apperrors.CodeDatabase, "failed to check user by username")
+		return false, errs.E(opExists, errs.Database, err)
 	}
 
 	return exists, nil
 }
 
 func (r *userRepository) Update(ctx context.Context, userID int, user *model.UserRequest) error {
+	const opUpdate = op + ".Update"
 	query := `
 		UPDATE users
 		SET username = COALESCE($2, username),
@@ -127,30 +133,32 @@ func (r *userRepository) Update(ctx context.Context, userID int, user *model.Use
 		user.IsActive,
 	)
 	if err != nil {
-		return apperrors.Wrap(err, apperrors.CodeDatabase, "failed to update user")
+		return errs.E(opUpdate, errs.Database, err)
 	}
 
 	if result.RowsAffected() == 0 {
-		return ErrUserNotFound
+		return errs.E(opUpdate+".NotFound", errs.NotFound, ErrUserNotFound)
 	}
 
 	return nil
 }
 
 func (r *userRepository) Delete(ctx context.Context, userID int) error {
+	const opDelete = op + ".Delete"
 	result, err := r.db.Pool.Exec(ctx, `DELETE FROM users WHERE id = $1`, userID)
 	if err != nil {
-		return apperrors.Wrap(err, apperrors.CodeDatabase, "failed to delete user")
+		return errs.E(opDelete, errs.Database, err)
 	}
 
 	if result.RowsAffected() == 0 {
-		return ErrUserNotFound
+		return errs.E(opDelete+".NotFound", errs.NotFound, ErrUserNotFound)
 	}
 
 	return nil
 }
 
 func scanUser(ctx context.Context, database *db.DB, query string, args ...any) (*model.UserDTO, error) {
+	const opScan = op + ".scanUser"
 	var row model.UserDTO
 	var isActive sql.NullBool
 	var createdAt, updatedAt, deletedAt sql.NullTime
@@ -174,9 +182,9 @@ func scanUser(ctx context.Context, database *db.DB, query string, args ...any) (
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrUserNotFound
+			return nil, errs.E(opScan, errs.NotFound, ErrUserNotFound)
 		}
-		return nil, apperrors.Wrap(err, apperrors.CodeDatabase, "failed to load user")
+		return nil, errs.E(opScan, errs.Database, err)
 	}
 
 	return &row, nil
@@ -193,18 +201,15 @@ func (r *userRepository) List(ctx context.Context, params *model.UserParams) (mo
 		FROM users
 	`
 
-	// Active users filter
 	if params.Active != nil {
 		conditions = append(conditions, fmt.Sprintf("is_active = $%d", len(args)+1))
 		args = append(args, *params.Active)
 	}
 
-	// Apply WHERE if conditions exist
 	if len(conditions) > 0 {
 		query += " WHERE " + strings.Join(conditions, " AND ")
 	}
 
-	// Pagination
 	offset := (params.Page - 1) * params.Limit
 	query += fmt.Sprintf(" ORDER BY created_at DESC LIMIT $%d OFFSET $%d",
 		len(args)+1, len(args)+2,
@@ -215,35 +220,35 @@ func (r *userRepository) List(ctx context.Context, params *model.UserParams) (mo
 }
 
 func (r *userRepository) Count(ctx context.Context, params *model.UserParams) (int, error) {
+	const opCount = op + ".Count"
 	var count int
 	var args []any
 	var conditions []string
 
 	query := `SELECT COUNT(*) FROM users`
 
-	// Active users filter
 	if params.Active != nil {
 		conditions = append(conditions, fmt.Sprintf("is_active = $%d", len(args)+1))
 		args = append(args, *params.Active)
 	}
 
-	// Apply WHERE if conditions exist
 	if len(conditions) > 0 {
 		query += " WHERE " + strings.Join(conditions, " AND ")
 	}
 
 	err := r.db.Pool.QueryRow(ctx, query, args...).Scan(&count)
 	if err != nil {
-		return 0, apperrors.Wrap(err, apperrors.CodeDatabase, "failed to count users")
+		return 0, errs.E(opCount, errs.Database, err)
 	}
 
 	return count, nil
 }
 
 func scanUsers(ctx context.Context, database *db.DB, query string, args ...any) (model.UserDTOs, error) {
+	const opScan = op + ".scanUsers"
 	rows, err := database.Pool.Query(ctx, query, args...)
 	if err != nil {
-		return nil, apperrors.Wrap(err, apperrors.CodeDatabase, "failed to query users")
+		return nil, errs.E(opScan, errs.Database, err)
 	}
 	defer rows.Close()
 
@@ -267,14 +272,14 @@ func scanUsers(ctx context.Context, database *db.DB, query string, args ...any) 
 			&deletedAt,
 		)
 		if err != nil {
-			return nil, apperrors.Wrap(err, apperrors.CodeDatabase, "failed to scan user row")
+			return nil, errs.E(opScan, errs.Database, err)
 		}
 		row.ApplyNullScalars(isActive, createdAt, updatedAt, deletedAt)
 		users = append(users, &row)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, apperrors.Wrap(err, apperrors.CodeDatabase, "failed to iterate users")
+		return nil, errs.E(opScan, errs.Database, err)
 	}
 
 	return users, nil

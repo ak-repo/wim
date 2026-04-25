@@ -1,4 +1,5 @@
 import axios, { type AxiosError, type AxiosInstance, type AxiosResponse } from "axios"
+import { useAuthStore } from "@/stores/authStore"
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8090/api/v1"
 
@@ -14,12 +15,15 @@ class ApiService {
       withCredentials: true,
     })
 
-    // Request interceptor
     this.client.interceptors.request.use(
       (config) => {
-        const token = localStorage.getItem("accessToken")
+        const token = useAuthStore.getState().accessToken
+        const localToken = localStorage.getItem("accessToken")
+        console.log("[API] Token from store:", token ? "present" : "MISSING", "| Token from localStorage:", localToken ? "present" : "MISSING")
         if (token) {
           config.headers.Authorization = `Bearer ${token}`
+        } else if (localToken) {
+          config.headers.Authorization = `Bearer ${localToken}`
         }
         return config
       },
