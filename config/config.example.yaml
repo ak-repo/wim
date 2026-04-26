@@ -1,10 +1,14 @@
 server:
   host: 0.0.0.0
   port: 8090
+  cors_allowed_origins:
+    - http://localhost:5174
+    - http://localhost:3000
 
 auth:
   access_token_ttl: 720h
   refresh_token_ttl: 2160h
+  jwt_issuer: wim
 
 database:
   ssl_mode: disable
@@ -13,6 +17,9 @@ database:
   connect_retry_max_delay: 30s
 
 redis:
+  host: localhost
+  port: 6380
+  password: wim_redis_pass
   db: 0
 
 kafka:

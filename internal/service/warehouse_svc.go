@@ -42,6 +42,9 @@ func (s *warehouseService) CreateWarehouse(ctx context.Context, input *model.War
 	if strings.TrimSpace(*input.Code) == "" || strings.TrimSpace(*input.Name) == "" || strings.TrimSpace(*input.Country) == "" {
 		return 0, apperrors.New(apperrors.CodeInvalidInput, "code, name and country cannot be empty")
 	}
+	if len(*input.Country) != 2 {
+		return 0, apperrors.New(apperrors.CodeInvalidInput, "country must be a 2-character ISO code")
+	}
 
 	// Check if code already exists
 	exists, err := s.repos.Warehouse.ExistsByCode(ctx, *input.Code)
@@ -119,8 +122,13 @@ func (s *warehouseService) UpdateWarehouse(ctx context.Context, warehouseID int,
 		return apperrors.New(apperrors.CodeInvalidInput, "name cannot be empty")
 	}
 
-	if input.Country != nil && strings.TrimSpace(*input.Country) == "" {
-		return apperrors.New(apperrors.CodeInvalidInput, "country cannot be empty")
+	if input.Country != nil {
+		if strings.TrimSpace(*input.Country) == "" {
+			return apperrors.New(apperrors.CodeInvalidInput, "country cannot be empty")
+		}
+		if len(*input.Country) != 2 {
+			return apperrors.New(apperrors.CodeInvalidInput, "country must be a 2-character ISO code")
+		}
 	}
 
 	err := s.repos.Warehouse.Update(ctx, warehouseID, input)

@@ -26,8 +26,9 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Host string
-	Port int
+	Host               string
+	Port               int
+	CORSAllowedOrigins []string
 }
 
 type AuthConfig struct {
@@ -115,7 +116,9 @@ LOAD FUNCTION
 */
 
 func Load() (*Config, error) {
-	_ = godotenv.Load(".env")
+	_ = godotenv.Load()
+	_ = godotenv.Load("../.env")
+	_ = godotenv.Load("../../.env")
 
 	v := viper.New()
 
@@ -124,6 +127,8 @@ func Load() (*Config, error) {
 	v.SetConfigType("yaml")
 	v.AddConfigPath(".")
 	v.AddConfigPath("./config")
+	v.AddConfigPath("../config")
+	v.AddConfigPath("../../config")
 
 	if err := v.ReadInConfig(); err != nil {
 		return nil, fmt.Errorf("read config: %w", err)
@@ -134,7 +139,12 @@ func Load() (*Config, error) {
 
 	// Convert Kafka brokers
 	if brokers := v.GetString("kafka.brokers"); brokers != "" {
-		v.Set("kafka.brokers", strings.Split(brokers, ","))
+		v.Set("kafka.brokers", splitCSV(brokers))
+	}
+
+	// Convert CORS origins from CSV when provided via env
+	if origins, ok := v.Get("server.cors_allowed_origins").(string); ok && strings.TrimSpace(origins) != "" {
+		v.Set("server.cors_allowed_origins", splitCSV(origins))
 	}
 
 	// Validate
@@ -159,7 +169,7 @@ func bindEnv(v *viper.Viper) {
 	v.BindEnv("database.password", "POSTGRES_PASSWORD")
 	v.BindEnv("database.database", "POSTGRES_DB")
 	v.BindEnv("database.max_conns", "DATABASE_MAX_CONNS")
-	v.BindEnv("database.url","DATABASE_URL")
+	v.BindEnv("database.url", "DATABASE_URL")
 
 	// REDIS
 	v.BindEnv("redis.host", "REDIS_HOST")
@@ -179,6 +189,7 @@ func bindEnv(v *viper.Viper) {
 	// OPTIONAL
 	v.BindEnv("server.host", "SERVER_HOST")
 	v.BindEnv("server.port", "SERVER_PORT")
+	v.BindEnv("server.cors_allowed_origins", "CORS_ALLOWED_ORIGINS")
 	v.BindEnv("log_level", "LOG_LEVEL")
 }
 
@@ -231,8 +242,9 @@ BUILD CONFIG
 func buildConfig(v *viper.Viper) *Config {
 	return &Config{
 		Server: ServerConfig{
-			Host: v.GetString("server.host"),
-			Port: v.GetInt("server.port"),
+			Host:               v.GetString("server.host"),
+			Port:               v.GetInt("server.port"),
+			CORSAllowedOrigins: v.GetStringSlice("server.cors_allowed_origins"),
 		},
 		Auth: AuthConfig{
 			JWTSecret:       v.GetString("auth.jwt_secret"),
@@ -292,4 +304,16 @@ func buildConfig(v *viper.Viper) *Config {
 		},
 		LogLevel: v.GetString("log_level"),
 	}
+}
+
+func splitCSV(raw string) []string {
+	parts := strings.Split(raw, ",")
+	out := make([]string, 0, len(parts))
+	for _, part := range parts {
+		item := strings.TrimSpace(part)
+		if item != "" {
+			out = append(out, item)
+		}
+	}
+	return out
 }

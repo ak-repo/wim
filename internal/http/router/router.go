@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/ak-repo/wim/config"
 	"github.com/ak-repo/wim/internal/http/handler"
 	"github.com/ak-repo/wim/internal/httpx"
 	"github.com/ak-repo/wim/pkg/auth"
@@ -13,23 +14,16 @@ import (
 	"github.com/go-chi/cors"
 )
 
-func SetupRoutes(handlers *handler.Handler, tokenManager auth.TokenManager) http.Handler {
+func SetupRoutes(handlers *handler.Handler, tokenManager auth.TokenManager, cfg *config.Config) http.Handler {
 	httpx.ExposeStack = strings.ToLower(os.Getenv("WIM_EXPOSE_STACK")) == "true"
 
 	r := chi.NewRouter()
 	r.Use(httpx.Recover)
 	r.Use(chiMiddleware.Logger)
 
-	allowedOrigins := []string{"http://localhost:5174", "http://localhost:3050"}
-	if raw := strings.TrimSpace(os.Getenv("CORS_ALLOWED_ORIGINS")); raw != "" {
-		parts := strings.Split(raw, ",")
-		allowedOrigins = allowedOrigins[:0]
-		for _, part := range parts {
-			origin := strings.TrimSpace(part)
-			if origin != "" {
-				allowedOrigins = append(allowedOrigins, origin)
-			}
-		}
+	allowedOrigins := cfg.Server.CORSAllowedOrigins
+	if len(allowedOrigins) == 0 {
+		allowedOrigins = []string{"http://localhost:5174", "http://localhost:3000"}
 	}
 
 	r.Use(cors.Handler(cors.Options{

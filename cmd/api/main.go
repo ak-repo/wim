@@ -74,7 +74,7 @@ func main() {
 
 	handlers := handler.NewHandlers(services)
 
-	router := router.SetupRoutes(handlers, tokenManager)
+	router := router.SetupRoutes(handlers, tokenManager, cfg)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port),
