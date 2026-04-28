@@ -8,10 +8,12 @@ type Handler struct {
 	User            *UserHandler
 	Product         *ProductHandler
 	ProductCategory *ProductCategoryHandler
+	PurchaseOrder   *PurchaseOrderHandler
 	Warehouse       *WarehouseHandler
 	Location        *LocationHandler
 	Inventory       *InventoryHandler
 	SalesOrder      *SalesOrderHandler
+	Picking         *PickingHandler
 	Dashboard       *DashboardHandler
 	UserRole        *UserRoleHandler
 }
@@ -23,10 +25,12 @@ func NewHandlers(services *service.Services) *Handler {
 		User:            NewUserHandler(services),
 		Product:         NewProductHandler(services),
 		ProductCategory: NewProductCategoryHandler(services),
+		PurchaseOrder:   NewPurchaseOrderHandler(services),
 		Warehouse:       NewWarehouseHandler(services),
 		Location:        NewLocationHandler(services),
 		Inventory:       NewInventoryHandler(services),
 		SalesOrder:      NewSalesOrderHandler(services),
+		Picking:         NewPickingHandler(services),
 		Dashboard:       NewDashboardHandler(services),
 		UserRole:        NewUserRoleHandler(services),
 	}

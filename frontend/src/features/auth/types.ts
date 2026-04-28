@@ -27,8 +27,8 @@ export interface User {
   role: string
   contact?: string
   isActive: boolean
-  created_at: string
-  updated_at: string
+  createdAt: string
+  updatedAt: string
 }
 
 export interface UserRequest {

@@ -2,8 +2,21 @@ package model
 
 import (
 	"database/sql"
+	"strings"
 	"time"
 )
+
+type DateOnly time.Time
+
+func (d *DateOnly) UnmarshalJSON(data []byte) error {
+	str := strings.Trim(string(data), `"`)
+	t, err := time.Parse("2006-01-02", str)
+	if err != nil {
+		return err
+	}
+	*d = DateOnly(t)
+	return nil
+}
 
 // SalesOrderDTO represents a sales order in the database
 type SalesOrderDTO struct {
@@ -243,7 +256,7 @@ type SalesOrderItemRequest struct {
 type CreateSalesOrderRequest struct {
 	CustomerID      int                     `json:"customerId"`
 	WarehouseID     int                     `json:"warehouseId"`
-	RequiredDate    *time.Time              `json:"requiredDate,omitempty"`
+	RequiredDate    *DateOnly               `json:"requiredDate,omitempty"`
 	ShippingMethod  string                  `json:"shippingMethod,omitempty"`
 	ShippingAddress string                  `json:"shippingAddress,omitempty"`
 	BillingAddress  string                  `json:"billingAddress,omitempty"`

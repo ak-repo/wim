@@ -26,6 +26,9 @@ const (
 
 	// Status Values
 	StatusPending            = "PENDING"
+	StatusDraft              = "DRAFT"
+	StatusPartiallyReceived  = "PARTIAL_RECEIVED"
+	StatusReceived           = "RECEIVED"
 	StatusProcessing         = "PROCESSING"
 	StatusShipped            = "SHIPPED"
 	StatusCancelled          = "CANCELLED"

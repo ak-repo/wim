@@ -17,6 +17,7 @@ import (
 type AuthService interface {
 	Register(ctx context.Context, input *model.RegisterRequest) error
 	Login(ctx context.Context, input *model.LoginRequest) (*model.AuthResponse, error)
+	Me(ctx context.Context) (*model.UserResponse, error)
 }
 type authService struct {
 	repos        *repository.Repositories
@@ -126,8 +127,14 @@ func (s *authService) issueTokens(ctx context.Context, user *model.UserDTO) (*mo
 		return nil, apperrors.Wrap(err, apperrors.CodeInternal, "failed to issue refresh token")
 	}
 
+	refCode, err := s.repos.RefCode.GenerateRefreshTokenRefCode(ctx)
+	if err != nil {
+		return nil, apperrors.Wrap(err, apperrors.CodeRefCodeFailed, "failed to generate refresh token reference")
+	}
+
 	now := time.Now().UTC()
 	storedToken := &model.RefreshTokenDTO{
+		RefCode:   refCode,
 		UserID:    user.ID,
 		TokenHash: refreshToken,
 		ExpiresAt: now.Add(refreshTokenTTL),
@@ -144,4 +151,21 @@ func (s *authService) issueTokens(ctx context.Context, user *model.UserDTO) (*mo
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}, nil
+}
+
+func (s *authService) Me(ctx context.Context) (*model.UserResponse, error) {
+	userID, ok := auth.UserIDFromContext(ctx)
+	if !ok || userID <= 0 {
+		return nil, apperrors.New(apperrors.CodeUnauthorized, "unauthorized")
+	}
+
+	user, err := s.repos.User.GetByID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, repository.ErrUserNotFound) {
+			return nil, apperrors.New(apperrors.CodeNotFound, "user not found")
+		}
+		return nil, apperrors.Wrap(err, apperrors.CodeDatabase, "failed to load user")
+	}
+
+	return user.ToAPIResponse(), nil
 }

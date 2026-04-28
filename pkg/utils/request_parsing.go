@@ -25,7 +25,8 @@ func DecodeJSON(w http.ResponseWriter, r *http.Request, dst any) bool {
 	decoder.DisallowUnknownFields()
 
 	if err := decoder.Decode(dst); err != nil {
-		httpx.WriteError(w, r, errs.E("utils/DecodeJSON", errs.InvalidRequest, errors.New("invalid request body"), errs.WithCode(errs.CodeInvalidRequest)))
+		origErr := err.Error()
+		httpx.WriteError(w, r, errs.E("utils/DecodeJSON", errs.InvalidRequest, errors.New("invalid request body: "+origErr), errs.WithCode(errs.CodeInvalidRequest)))
 		return false
 	}
 

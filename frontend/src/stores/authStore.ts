@@ -13,7 +13,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       user: null,
       accessToken: null,
       refreshToken: null,
@@ -34,7 +34,7 @@ export const useAuthStore = create<AuthState>()(
     {
       name: "auth-storage",
       partialize: (state) => ({ user: state.user, accessToken: state.accessToken, refreshToken: state.refreshToken, isAuthenticated: state.isAuthenticated }),
-      onRehydrateStorage: () => (state, error) => {
+      onRehydrateStorage: () => (state) => {
         console.log("[AuthStore] Rehydrated", { 
           isAuthenticated: state?.isAuthenticated, 
           hasToken: !!localStorage.getItem("accessToken"),

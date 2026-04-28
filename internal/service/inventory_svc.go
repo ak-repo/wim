@@ -6,13 +6,13 @@ import (
 	"strings"
 
 	"github.com/ak-repo/wim/internal/constants"
+	apperrors "github.com/ak-repo/wim/internal/errs"
 	"github.com/ak-repo/wim/internal/model"
 	"github.com/ak-repo/wim/internal/repository"
-	apperrors "github.com/ak-repo/wim/internal/errs"
 )
 
 type InventoryService interface {
-	AdjustInventory(ctx context.Context, input *model.AdjustInventoryRequest) error
+	AdjustInventory(ctx context.Context, input *model.AdjustInventoryRequest, performedBy *int) error
 	GetInventoryByID(ctx context.Context, inventoryID int) (*model.InventoryResponse, error)
 	ListInventory(ctx context.Context, params *model.InventoryParams) ([]*model.InventoryResponse, int, error)
 	ListStockMovements(ctx context.Context, params *model.StockMovementParams) ([]*model.StockMovementResponse, int, error)
@@ -26,7 +26,7 @@ func NewInventoryService(repositories *repository.Repositories) InventoryService
 	return &inventoryService{repos: repositories}
 }
 
-func (s *inventoryService) AdjustInventory(ctx context.Context, input *model.AdjustInventoryRequest) error {
+func (s *inventoryService) AdjustInventory(ctx context.Context, input *model.AdjustInventoryRequest, performedBy *int) error {
 	if input == nil {
 		return apperrors.New(apperrors.CodeInvalidInput, "invalid input")
 	}
@@ -74,7 +74,7 @@ func (s *inventoryService) AdjustInventory(ctx context.Context, input *model.Adj
 		constants.MovementAdjustment,
 		constants.ReferenceManualAdjustment,
 		nil,
-		nil,
+		performedBy,
 		notes,
 	)
 	if err != nil {

@@ -38,6 +38,21 @@ function PublicRoute() {
   return <Navigate to="/" replace />
 }
 
+function RoleRoute({ allowedRoles }: { allowedRoles: string[] }) {
+  const accessToken = localStorage.getItem("accessToken")
+  const role = useAuthStore((state) => state.user?.role)
+
+  if (!accessToken) {
+    return <Navigate to="/login" replace />
+  }
+
+  if (role && !allowedRoles.includes(role) && role !== "super-admin") {
+    return <Navigate to="/" replace />
+  }
+
+  return <Outlet />
+}
+
 // Admin Layout wrapper
 function AdminLayoutWrapper() {
   return (
@@ -74,32 +89,42 @@ export const router = createBrowserRouter([
         element: <AdminLayoutWrapper />,
         children: [
           {
-            path: "/",
-            element: <DashboardPage />,
+            element: <RoleRoute allowedRoles={["admin"]} />,
+            children: [
+              {
+                path: "/",
+                element: <DashboardPage />,
+              },
+              {
+                path: "/products",
+                element: <ProductsPage />,
+              },
+              {
+                path: "/warehouses",
+                element: <WarehousesPage />,
+              },
+              {
+                path: "/locations",
+                element: <LocationsPage />,
+              },
+              {
+                path: "/inventory",
+                element: <InventoryPage />,
+              },
+              {
+                path: "/sales-orders",
+                element: <SalesOrdersPage />,
+              },
+            ],
           },
           {
-            path: "/users",
-            element: <UsersPage />,
-          },
-          {
-            path: "/products",
-            element: <ProductsPage />,
-          },
-          {
-            path: "/warehouses",
-            element: <WarehousesPage />,
-          },
-          {
-            path: "/locations",
-            element: <LocationsPage />,
-          },
-          {
-            path: "/inventory",
-            element: <InventoryPage />,
-          },
-          {
-            path: "/sales-orders",
-            element: <SalesOrdersPage />,
+            element: <RoleRoute allowedRoles={["super-admin"]} />,
+            children: [
+              {
+                path: "/users",
+                element: <UsersPage />,
+              },
+            ],
           },
         ],
       },

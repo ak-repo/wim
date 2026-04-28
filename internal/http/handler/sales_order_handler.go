@@ -8,6 +8,7 @@ import (
 	"github.com/ak-repo/wim/internal/httpx"
 	"github.com/ak-repo/wim/internal/model"
 	"github.com/ak-repo/wim/internal/service"
+	"github.com/ak-repo/wim/pkg/auth"
 	"github.com/ak-repo/wim/pkg/utils"
 )
 
@@ -28,11 +29,13 @@ func (h *SalesOrderHandler) CreateSalesOrder(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// Get user from context if available
-	var createdBy *int
-	// TODO: Extract user ID from auth context
+	createdBy, _ := auth.UserIDFromContext(r.Context())
+	var createdByPtr *int
+	if createdBy > 0 {
+		createdByPtr = &createdBy
+	}
 
-	order, err := h.services.SalesOrder.CreateSalesOrder(r.Context(), &req, createdBy)
+	order, err := h.services.SalesOrder.CreateSalesOrder(r.Context(), &req, createdByPtr)
 	if err != nil {
 		httpx.WriteError(w, r, err)
 		return
@@ -154,11 +157,13 @@ func (h *SalesOrderHandler) AllocateSalesOrder(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	// Get user from context if available
-	var performedBy *int
-	// TODO: Extract user ID from auth context
+	performedBy, _ := auth.UserIDFromContext(r.Context())
+	var performedByPtr *int
+	if performedBy > 0 {
+		performedByPtr = &performedBy
+	}
 
-	if err := h.services.SalesOrder.AllocateSalesOrder(r.Context(), id, performedBy); err != nil {
+	if err := h.services.SalesOrder.AllocateSalesOrder(r.Context(), id, performedByPtr); err != nil {
 		httpx.WriteError(w, r, err)
 		return
 	}
@@ -197,11 +202,13 @@ func (h *SalesOrderHandler) ShipSalesOrder(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// Get user from context if available
-	var performedBy *int
-	// TODO: Extract user ID from auth context
+	performedBy, _ := auth.UserIDFromContext(r.Context())
+	var performedByPtr *int
+	if performedBy > 0 {
+		performedByPtr = &performedBy
+	}
 
-	if err := h.services.SalesOrder.ShipSalesOrder(r.Context(), id, &req, performedBy); err != nil {
+	if err := h.services.SalesOrder.ShipSalesOrder(r.Context(), id, &req, performedByPtr); err != nil {
 		httpx.WriteError(w, r, err)
 		return
 	}

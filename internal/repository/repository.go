@@ -7,11 +7,13 @@ type Repositories struct {
 	Auth            AuthRepository
 	Product         ProductRepository
 	ProductCategory ProductCategoryRepository
+	PurchaseOrder   PurchaseOrderRepository
 	Warehouse       WarehouseRepository
 	Location        LocationRepository
 	Inventory       InventoryRepository
 	RefCode         RefCodeGenerator
 	SalesOrder      SalesOrderRepository
+	Picking         PickingRepository
 	UserRole        UserRoleRepository
 }
 
@@ -26,11 +28,13 @@ func NewRepositories(deps Dependencies) *Repositories {
 		Auth:            NewAuthRepository(deps.DB),
 		Product:         NewProductRepository(deps.DB),
 		ProductCategory: NewProductCategoryRepository(deps.DB),
+		PurchaseOrder:   NewPurchaseOrderRepository(deps.DB),
 		Warehouse:       NewWarehouseRepository(deps.DB),
 		Location:        NewLocationRepository(deps.DB),
 		Inventory:       NewInventoryRepository(deps.DB),
 		SalesOrder:      NewSalesOrderRepository(deps.DB),
 		RefCode:         NewRefCodeGenerator(deps.DB, deps.Redis),
+		Picking:         NewPickingRepository(deps.DB),
 		UserRole:        NewUserRoleRepository(deps.DB),
 	}
 }

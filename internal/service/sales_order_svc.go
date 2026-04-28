@@ -111,7 +111,8 @@ func (s *salesOrderService) CreateSalesOrder(ctx context.Context, input *model.C
 	}
 
 	if input.RequiredDate != nil {
-		order.RequiredDate = input.RequiredDate
+		t := time.Time(*input.RequiredDate)
+		order.RequiredDate = &t
 	}
 	if strings.TrimSpace(input.ShippingMethod) != "" {
 		order.ShippingMethod = &input.ShippingMethod
@@ -251,7 +252,8 @@ func (s *salesOrderService) UpdateSalesOrder(ctx context.Context, orderID int, i
 		order.WarehouseID = input.WarehouseID
 	}
 	if input.RequiredDate != nil {
-		order.RequiredDate = input.RequiredDate
+		t := time.Time(*input.RequiredDate)
+		order.RequiredDate = &t
 	}
 	if strings.TrimSpace(input.ShippingMethod) != "" {
 		order.ShippingMethod = &input.ShippingMethod

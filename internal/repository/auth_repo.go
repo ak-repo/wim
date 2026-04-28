@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/ak-repo/wim/internal/db"
-	"github.com/ak-repo/wim/internal/model"
 	apperrors "github.com/ak-repo/wim/internal/errs"
+	"github.com/ak-repo/wim/internal/model"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -28,10 +28,10 @@ func NewAuthRepository(database *db.DB) AuthRepository {
 func (r *authRepository) StoreRefreshToken(ctx context.Context, token *model.RefreshTokenDTO) error {
 	err := r.db.Pool.QueryRow(ctx, `
 		INSERT INTO refresh_tokens (
-			user_id, token_hash, expires_at, revoked_at, created_at, updated_at
-		) VALUES ($1, $2, $3, $4, $5, $6)
+			ref_code, user_id, token_hash, expires_at, revoked_at, created_at, updated_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id
-	`, token.UserID, token.TokenHash, token.ExpiresAt, token.RevokedAt, token.CreatedAt, token.UpdatedAt).Scan(&token.ID)
+	`, token.RefCode, token.UserID, token.TokenHash, token.ExpiresAt, token.RevokedAt, token.CreatedAt, token.UpdatedAt).Scan(&token.ID)
 	if err != nil {
 		return apperrors.Wrap(err, apperrors.CodeDatabase, "failed to store refresh token")
 	}

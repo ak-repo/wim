@@ -35,6 +35,7 @@ type AuthResponse struct {
 
 type RefreshTokenDTO struct {
 	ID        int          `db:"id"`
+	RefCode   string       `db:"ref_code"`
 	UserID    int          `db:"user_id"`
 	TokenHash string       `db:"token_hash"`
 	ExpiresAt time.Time    `db:"expires_at"`

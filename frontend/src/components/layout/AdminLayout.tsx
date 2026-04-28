@@ -16,21 +16,23 @@ import {
 import { cn } from "@/utils"
 import { useLogout } from "@/features/auth/hooks"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { useAuthStore } from "@/stores/authStore"
 
 interface SidebarItem {
   name: string
   href: string
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
+  roles?: string[]
 }
 
 const navigation: SidebarItem[] = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "User Master", href: "/users", icon: Users },
-  { name: "Product Master", href: "/products", icon: Layers },
-  { name: "Warehouses", href: "/warehouses", icon: Warehouse },
-  { name: "Locations", href: "/locations", icon: MapPin },
-  { name: "Inventory", href: "/inventory", icon: Database },
-  { name: "Sales Orders", href: "/sales-orders", icon: ShoppingCart },
+  { name: "Dashboard", href: "/", icon: LayoutDashboard, roles: ["admin", "super-admin"] },
+  { name: "User Master", href: "/users", icon: Users, roles: ["super-admin"] },
+  { name: "Product Master", href: "/products", icon: Layers, roles: ["admin", "super-admin"] },
+  { name: "Warehouses", href: "/warehouses", icon: Warehouse, roles: ["admin", "super-admin"] },
+  { name: "Locations", href: "/locations", icon: MapPin, roles: ["admin", "super-admin"] },
+  { name: "Inventory", href: "/inventory", icon: Database, roles: ["admin", "super-admin"] },
+  { name: "Sales Orders", href: "/sales-orders", icon: ShoppingCart, roles: ["admin", "super-admin"] },
 ]
 
 const Sidebar: React.FC<{
@@ -39,6 +41,17 @@ const Sidebar: React.FC<{
 }> = ({ open, setOpen }) => {
   const location = useLocation()
   const logout = useLogout()
+  const role = useAuthStore((state) => state.user?.role)
+
+  const visibleNavigation = navigation.filter((item) => {
+    if (!item.roles || item.roles.length === 0) {
+      return true
+    }
+    if (!role) {
+      return true
+    }
+    return item.roles.includes(role)
+  })
 
   return (
     <>
@@ -77,7 +90,7 @@ const Sidebar: React.FC<{
             <span className="text-[9px] text-white/30 uppercase tracking-widest font-medium">Menu</span>
           </div>
           <ul className="space-y-0.5">
-            {navigation.map((item) => {
+            {visibleNavigation.map((item) => {
               const isActive = location.pathname === item.href
               const Icon = item.icon
               return (
@@ -107,8 +120,12 @@ const Sidebar: React.FC<{
               <span className="text-[11px] font-medium text-white">AK</span>
             </div>
             <div className="flex flex-col overflow-hidden">
-              <span className="text-[12px] font-medium text-white/90 truncate">Admin User</span>
-              <span className="text-[10px] text-white/50 truncate">Administrator</span>
+              <span className="text-[12px] font-medium text-white/90 truncate">
+                {useAuthStore.getState().user?.username || "Admin User"}
+              </span>
+              <span className="text-[10px] text-white/50 truncate">
+                {role || "Administrator"}
+              </span>
             </div>
           </div>
           <button

@@ -48,3 +48,13 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	httpx.WriteJSON(w, http.StatusOK, data)
 }
+
+func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
+	user, err := h.services.Auth.Me(r.Context())
+	if err != nil {
+		httpx.WriteError(w, r, err)
+		return
+	}
+
+	httpx.WriteJSON(w, http.StatusOK, user)
+}

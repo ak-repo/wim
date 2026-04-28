@@ -1,4 +1,3 @@
-import * as React from "react"
 import { ArrowUpRight, ArrowDownRight, Minus } from "lucide-react"
 import type { StockMovement } from "@/features/inventory/types"
 

@@ -3,6 +3,7 @@ package middleware
 import (
 	"errors"
 	"net/http"
+	"slices"
 
 	"github.com/ak-repo/wim/internal/constants"
 	"github.com/ak-repo/wim/internal/errs"
@@ -12,8 +13,11 @@ import (
 
 const opRBAC errs.Op = "middleware/RBAC.RoleBasedAccessControl"
 
-// Role Based Access Control
 func RoleBasedAccessControl(role string) func(http.Handler) http.Handler {
+	return RequireAnyRole(role)
+}
+
+func RequireAnyRole(roles ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			claims, ok := auth.ClaimsFromContext(r.Context())
@@ -27,7 +31,7 @@ func RoleBasedAccessControl(role string) func(http.Handler) http.Handler {
 				next.ServeHTTP(w, r)
 				return
 			}
-			if claims.Role != role {
+			if len(roles) == 0 || !slices.Contains(roles, claims.Role) {
 				err := errs.E(opRBAC, errs.Forbidden, errors.New("you are not authorized to access this resource"), errs.WithCode(errs.CodeForbidden))
 				httpx.WriteError(w, r, err)
 				return

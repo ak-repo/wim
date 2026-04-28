@@ -21,6 +21,8 @@ type RefCodeGenerator interface {
 	GenerateLocationRefCode(ctx context.Context) (string, error)
 	GenerateUserRoleRefCode(ctx context.Context) (string, error)
 	GenerateSalesOrderRefCode(ctx context.Context) (string, error)
+	GeneratePurchaseOrderRefCode(ctx context.Context) (string, error)
+	GenerateRefreshTokenRefCode(ctx context.Context) (string, error)
 }
 
 type refCodeGenerator struct {
@@ -58,6 +60,14 @@ func (r *refCodeGenerator) GenerateUserRoleRefCode(ctx context.Context) (string,
 
 func (r *refCodeGenerator) GenerateSalesOrderRefCode(ctx context.Context) (string, error) {
 	return r.GenerateRefCode(ctx, "SO", "sales_orders", "ref_code")
+}
+
+func (r *refCodeGenerator) GeneratePurchaseOrderRefCode(ctx context.Context) (string, error) {
+	return r.GenerateRefCode(ctx, "PO", "purchase_orders", "ref_code")
+}
+
+func (r *refCodeGenerator) GenerateRefreshTokenRefCode(ctx context.Context) (string, error) {
+	return r.GenerateRefCode(ctx, "RT", "refresh_tokens", "ref_code")
 }
 
 func (r *refCodeGenerator) GenerateRefCode(ctx context.Context, prefix string, tableName string, columnName string) (string, error) {

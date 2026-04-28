@@ -6,7 +6,6 @@ import type {
   UserRequest,
   UserParams,
 } from "@/features/auth/types"
-import type { User } from "@/features/auth/types"
 
 // Auth mutations
 export const useLogin = () => {
@@ -15,23 +14,16 @@ export const useLogin = () => {
   return useMutation({
     mutationFn: async (data: LoginRequest) => {
       const response = await authService.login(data)
-      // Get user info - we'll need to parse JWT or make a separate call
-      // For now, we'll store just the tokens
-      return response
+      const { accessToken, refreshToken } = response
+      
+      localStorage.setItem("accessToken", accessToken)
+      localStorage.setItem("refreshToken", refreshToken || "")
+      
+      const user = await authService.me()
+      return { ...response, user }
     },
-    onSuccess: (data) => {
-      // Mock user data since backend doesn't return it directly
-      // In a real app, you'd decode the JWT or fetch user profile
-      const mockUser: User = {
-        id: 0,
-        username: "",
-        email: "",
-        role: "admin",
-        isActive: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }
-      setAuth(mockUser, data.accessToken, data.refreshToken || "")
+    onSuccess: ({ accessToken, refreshToken, user }) => {
+      setAuth(user, accessToken, refreshToken || "")
     },
   })
 }

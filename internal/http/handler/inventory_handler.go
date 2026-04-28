@@ -6,6 +6,7 @@ import (
 	"github.com/ak-repo/wim/internal/httpx"
 	"github.com/ak-repo/wim/internal/model"
 	"github.com/ak-repo/wim/internal/service"
+	"github.com/ak-repo/wim/pkg/auth"
 	"github.com/ak-repo/wim/pkg/utils"
 )
 
@@ -23,7 +24,13 @@ func (h *InventoryHandler) AdjustInventory(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if err := h.services.Inventory.AdjustInventory(r.Context(), &req); err != nil {
+	performedBy, _ := auth.UserIDFromContext(r.Context())
+	var performedByPtr *int
+	if performedBy > 0 {
+		performedByPtr = &performedBy
+	}
+
+	if err := h.services.Inventory.AdjustInventory(r.Context(), &req, performedByPtr); err != nil {
 		httpx.WriteError(w, r, err)
 		return
 	}

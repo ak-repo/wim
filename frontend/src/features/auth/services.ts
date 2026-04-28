@@ -15,6 +15,11 @@ export const authService = {
     return response.data
   },
 
+  me: async (): Promise<User> => {
+    const response = await apiService.get<User>("/admin/me")
+    return response.data
+  },
+
   register: async (data: RegisterRequest): Promise<AuthResponse> => {
     const response = await apiService.post<AuthResponse>("/adminPublic/register", data)
     return response.data
