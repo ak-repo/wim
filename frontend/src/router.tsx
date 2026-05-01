@@ -7,6 +7,8 @@ import { useAuthStore } from "@/stores/authStore"
 import LoginPage from "@/pages/Login"
 import DashboardPage from "@/pages/Dashboard"
 import UsersPage from "@/pages/Users"
+import CustomersPage from "@/pages/Customers"
+import CustomerDetailPage from "@/pages/CustomerDetail"
 import ProductsPage from "@/pages/Products"
 import WarehousesPage from "@/pages/Warehouses"
 import LocationsPage from "@/pages/Locations"
@@ -65,6 +67,14 @@ export const router = createBrowserRouter([
           {
             path: "/users",
             element: <UsersPage />,
+          },
+          {
+            path: "/customers",
+            element: <CustomersPage />,
+          },
+          {
+            path: "/customers/:id",
+            element: <CustomerDetailPage />,
           },
           {
             path: "/products",

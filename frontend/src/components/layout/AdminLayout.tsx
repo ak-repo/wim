@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom"
 import {
   LayoutDashboard,
   Users,
+  UserRound,
   Package,
   Warehouse,
   MapPin,
@@ -23,6 +24,7 @@ interface SidebarItem {
 const navigation: SidebarItem[] = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Users", href: "/users", icon: Users },
+  { name: "Customers", href: "/customers", icon: UserRound },
   { name: "Products", href: "/products", icon: Package },
   { name: "Warehouses", href: "/warehouses", icon: Warehouse },
   { name: "Locations", href: "/locations", icon: MapPin },

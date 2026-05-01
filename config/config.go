@@ -13,14 +13,14 @@ type Config struct {
 	Auth     AuthConfig
 	Database DatabaseConfig
 	Redis    RedisConfig
-	Kafka    KafkaConfig
-	Worker   WorkerConfig
 	LogLevel string
 }
 
 type ServerConfig struct {
-	Port int
-	Host string
+	Port         int
+	Host         string
+	AllowOrigins []string
+	APIPrefix    string
 }
 
 type AuthConfig struct {
@@ -68,20 +68,6 @@ type RedisConfig struct {
 	DB       int
 }
 
-type KafkaConfig struct {
-	Brokers []string
-	Topic   string
-	GroupID string
-}
-
-type WorkerConfig struct {
-	PoolSize   int
-	QueueSize  int
-	RetryCount int
-	RetryDelay time.Duration
-	BatchSize  int
-}
-
 func Load() *Config {
 	v := viper.New()
 	v.SetConfigName("config")
@@ -92,6 +78,8 @@ func Load() *Config {
 
 	v.SetDefault("server.port", 8080)
 	v.SetDefault("server.host", "0.0.0.0")
+	v.SetDefault("server.cors_allowed_origins", []string{})
+	v.SetDefault("server.api_prefix", "/api/v1")
 	v.SetDefault("auth.jwt_secret", "change-me-in-production")
 	v.SetDefault("auth.jwt_issuer", "wim")
 	v.SetDefault("auth.access_token_ttl", "168h")
@@ -109,11 +97,6 @@ func Load() *Config {
 	v.SetDefault("database.connect_retry_max_delay", "30s")
 
 	v.SetDefault("log_level", "info")
-	v.SetDefault("worker.pool_size", 5)
-	v.SetDefault("worker.queue_size", 100)
-	v.SetDefault("worker.retry_count", 3)
-	v.SetDefault("worker.retry_delay", "1s")
-	v.SetDefault("worker.batch_size", 10)
 
 	_ = v.ReadInConfig()
 
@@ -130,6 +113,8 @@ func Load() *Config {
 		Server: ServerConfig{
 			Port: v.GetInt("server.port"),
 			Host: v.GetString("server.host"),
+			AllowOrigins: v.GetStringSlice("server.cors_allowed_origins"),
+			APIPrefix: v.GetString("server.api_prefix"),
 		},
 		Auth: AuthConfig{
 			JWTSecret:       v.GetString("auth.jwt_secret"),
@@ -156,18 +141,6 @@ func Load() *Config {
 			Port:     v.GetInt("redis.port"),
 			Password: v.GetString("redis.password"),
 			DB:       v.GetInt("redis.db"),
-		},
-		Kafka: KafkaConfig{
-			Brokers: v.GetStringSlice("kafka.brokers"),
-			Topic:   v.GetString("kafka.topic"),
-			GroupID: v.GetString("kafka.group_id"),
-		},
-		Worker: WorkerConfig{
-			PoolSize:   v.GetInt("worker.pool_size"),
-			QueueSize:  v.GetInt("worker.queue_size"),
-			RetryCount: v.GetInt("worker.retry_count"),
-			RetryDelay: v.GetDuration("worker.retry_delay"),
-			BatchSize:  v.GetInt("worker.batch_size"),
 		},
 		LogLevel: v.GetString("log_level"),
 	}

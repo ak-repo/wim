@@ -9,10 +9,12 @@ import (
 
 	"github.com/ak-repo/wim/internal/db"
 	apperrors "github.com/ak-repo/wim/pkg/errors"
+	"github.com/jackc/pgx/v5"
 )
 
 type RefCodeGenerator interface {
 	GenerateUserRefCode(ctx context.Context) (string, error)
+	GenerateCustomerRefCode(ctx context.Context) (string, error)
 	GenerateProductRefCode(ctx context.Context) (string, error)
 	GenerateWarehouseRefCode(ctx context.Context) (string, error)
 	GenerateLocationRefCode(ctx context.Context) (string, error)
@@ -29,6 +31,10 @@ func NewRefCodeGenerator(database *db.DB, redis *db.Redis) RefCodeGenerator {
 
 func (r *refCodeGenerator) GenerateUserRefCode(ctx context.Context) (string, error) {
 	return r.GenerateRefCode(ctx, "USR", "users", "ref_code")
+}
+
+func (r *refCodeGenerator) GenerateCustomerRefCode(ctx context.Context) (string, error) {
+	return r.GenerateRefCode(ctx, "CUS", "customers", "ref_code")
 }
 
 func (r *refCodeGenerator) GenerateProductRefCode(ctx context.Context) (string, error) {
@@ -58,6 +64,9 @@ func (r *refCodeGenerator) GenerateRefCode(ctx context.Context, prefix string, t
 	if err != nil {
 		return "", err
 	}
+	if lastCode == "" {
+		return fmt.Sprintf("%s-%03d", prefix, 1), nil
+	}
 	return r.nextRefcode(ctx, prefix, lastCode)
 
 }
@@ -68,15 +77,21 @@ func (r *refCodeGenerator) getLastRefCode(ctx context.Context, tableName string,
 	var refCode string
 	err := r.db.Pool.QueryRow(ctx, query, prefix+"-%").Scan(&refCode)
 	if err != nil {
-		return "", nil
+		if err == pgx.ErrNoRows {
+			return "", nil
+		}
+		return "", err
 	}
 
 	return refCode, nil
 }
 
 func (r *refCodeGenerator) nextRefcode(ctx context.Context, prefix, lastRefCode string) (string, error) {
+	if lastRefCode == "" {
+		return fmt.Sprintf("%s-%03d", prefix, 1), nil
+	}
 
-	re := regexp.MustCompile(prefix + `-(\d+)`)
+	re := regexp.MustCompile("^" + regexp.QuoteMeta(prefix) + `-(\d+)$`)
 	matches := re.FindStringSubmatch(lastRefCode)
 	if len(matches) < 2 {
 		return "", apperrors.New(apperrors.CodeRefCodeFailed, "invalid reference code format")

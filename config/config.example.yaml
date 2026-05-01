@@ -1,43 +1,27 @@
 server:
   host: 0.0.0.0
   port: 8090
+  cors_allowed_origins:
+    - http://localhost:5173
+    - http://localhost:5174
+    - http://localhost:3000
 
 auth:
-  jwt_secret: change-me-in-production
+  access_token_ttl: 720h
+  refresh_token_ttl: 2160h
   jwt_issuer: wim
-  access_token_ttl: 168h
-  refresh_token_ttl: 720h
 
 database:
-  url: postgres://wim_user:wim_pass@localhost:5432/warehouse_inventory?sslmode=disable
-  host: localhost
-  port: 5432
-  user: wim_user
-  password: wim_pass
-  database: warehouse_inventory
   ssl_mode: disable
-  max_conns: 25
   connect_retries: 6
   connect_retry_initial_delay: 1s
   connect_retry_max_delay: 30s
 
 redis:
   host: localhost
-  port: 6379
-  password: ""
+  port: 6380
+  password: wim_redis_pass
   db: 0
 
-kafka:
-  brokers:
-    - localhost:9092
-  topic: warehouse-events
-  group_id: warehouse-worker
 
-worker:
-  pool_size: 5
-  queue_size: 100
-  retry_count: 3
-  retry_delay: 1s
-  batch_size: 10
 
-log_level: info

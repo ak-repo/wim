@@ -79,6 +79,19 @@ CREATE TABLE IF NOT EXISTS locations (
     UNIQUE(warehouse_id, location_code)
 );
 
+CREATE TABLE IF NOT EXISTS customers (
+    id BIGSERIAL PRIMARY KEY,
+    ref_code TEXT UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    contact VARCHAR(50),
+    address TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL
+);
+
 
 CREATE INDEX IF NOT EXISTS idx_products_sku ON products(sku);
 CREATE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode);
@@ -88,6 +101,9 @@ CREATE INDEX IF NOT EXISTS idx_locations_warehouse ON locations(warehouse_id);
 CREATE INDEX IF NOT EXISTS idx_locations_code ON locations(location_code);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_customers_email ON customers(email);
+CREATE INDEX IF NOT EXISTS idx_customers_name ON customers(name);
+
 
 
 -- +goose Down
@@ -104,3 +120,6 @@ DROP TABLE IF EXISTS warehouses CASCADE;
 DROP TABLE IF EXISTS products CASCADE;
 DROP TABLE IF EXISTS refresh_tokens CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+DROP INDEX IF EXISTS idx_customers_name;
+DROP INDEX IF EXISTS idx_customers_email;
+DROP TABLE IF EXISTS customers CASCADE;

@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ak-repo/wim/internal/constants"
 	"github.com/ak-repo/wim/internal/model"
 	"github.com/ak-repo/wim/internal/repository"
 	"github.com/ak-repo/wim/pkg/auth"
@@ -56,7 +55,7 @@ func (s *authService) Register(ctx context.Context, input *model.RegisterRequest
 
 	username := strings.TrimSpace(input.Username)
 	email := input.Email
-	role := constants.RoleWorker
+	role := input.Role
 	isActive := true
 	user := &model.UserRequest{
 		Username:     &username,
