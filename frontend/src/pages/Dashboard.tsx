@@ -1,149 +1,160 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card"
+import { useMemo } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/Table"
+import { Badge } from "@/components/ui/Badge"
+import { useUsers } from "@/features/auth/hooks"
+import { useProducts } from "@/features/products/hooks"
+import { useWarehouses } from "@/features/warehouses/hooks"
+import { useLocations } from "@/features/locations/hooks"
 import {
   Package,
   Users,
   Warehouse,
   MapPin,
-  Boxes,
+  BarChart3,
 } from "lucide-react"
 
-const stats = [
-  {
-    title: "Total Products",
-    value: "0",
-    description: "Active products in catalog",
-    icon: Package,
-    trend: "+0%",
-  },
-  {
-    title: "Total Users",
-    value: "0",
-    description: "Registered users",
-    icon: Users,
-    trend: "+0%",
-  },
-  {
-    title: "Warehouses",
-    value: "0",
-    description: "Active warehouses",
-    icon: Warehouse,
-    trend: "+0%",
-  },
-  {
-    title: "Locations",
-    value: "0",
-    description: "Storage locations",
-    icon: MapPin,
-    trend: "+0%",
-  },
-]
-
 export default function DashboardPage() {
+  const usersQuery = useUsers({ page: 1, limit: 1 })
+  const productsQuery = useProducts({ page: 1, limit: 1 })
+  const warehousesQuery = useWarehouses({ page: 1, limit: 1 })
+  const locationsQuery = useLocations({ page: 1, limit: 1 })
+
+  const stats = useMemo(
+    () => [
+      {
+        title: "Total Products",
+        value: productsQuery.data?.total,
+        description: "Catalog items",
+        icon: Package,
+      },
+      {
+        title: "Total Users",
+        value: usersQuery.data?.total,
+        description: "Account records",
+        icon: Users,
+      },
+      {
+        title: "Warehouses",
+        value: warehousesQuery.data?.total,
+        description: "Connected sites",
+        icon: Warehouse,
+      },
+      {
+        title: "Locations",
+        value: locationsQuery.data?.total,
+        description: "Storage zones",
+        icon: MapPin,
+      },
+    ],
+    [productsQuery.data?.total, usersQuery.data?.total, warehousesQuery.data?.total, locationsQuery.data?.total]
+  )
+
+  const queryStates = [usersQuery, productsQuery, warehousesQuery, locationsQuery]
+  const hasAnyMetricData = stats.some((stat) => typeof stat.value === "number")
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
-        <p className="text-muted-foreground">
-          Welcome to your warehouse management dashboard.
-        </p>
+        <h2 className="text-2xl font-semibold tracking-tight">Dashboard</h2>
+        <p className="text-sm text-muted-foreground">System overview from available backend data.</p>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => {
           const Icon = stat.icon
+          const isLoading = queryStates.some((query) => query.isLoading)
           return (
-            <Card key={stat.title}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+            <Card key={stat.title} className="h-full">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+                <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {stat.title}
+                </CardTitle>
                 <Icon className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stat.description}
-                </p>
+                <div className="font-mono text-3xl font-semibold leading-none">
+                  {typeof stat.value === "number" ? stat.value : isLoading ? "..." : "--"}
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">{stat.description}</p>
               </CardContent>
             </Card>
           )
         })}
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="h-full lg:col-span-2">
           <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Common tasks and operations</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <a
-              href="/products"
-              className="flex items-center gap-2 rounded-md border p-3 hover:bg-muted transition-colors"
-            >
-              <Package className="h-4 w-4" />
-              <span>Add New Product</span>
-            </a>
-            <a
-              href="/warehouses"
-              className="flex items-center gap-2 rounded-md border p-3 hover:bg-muted transition-colors"
-            >
-              <Warehouse className="h-4 w-4" />
-              <span>Manage Warehouses</span>
-            </a>
-            <a
-              href="/locations"
-              className="flex items-center gap-2 rounded-md border p-3 hover:bg-muted transition-colors"
-            >
-              <MapPin className="h-4 w-4" />
-              <span>View Locations</span>
-            </a>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>System Status</CardTitle>
-            <CardDescription>Current system health</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                <span className="text-sm">API Server</span>
-              </div>
-              <span className="text-xs text-muted-foreground">Online</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                <span className="text-sm">Database</span>
-              </div>
-              <span className="text-xs text-muted-foreground">Connected</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                <span className="text-sm">Cache</span>
-              </div>
-              <span className="text-xs text-muted-foreground">Active</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>Latest system events</CardDescription>
+            <CardTitle className="text-sm font-semibold">Inventory Throughput (7d)</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <Boxes className="h-8 w-8 text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground">No recent activity</p>
+            <div className="flex min-h-[220px] flex-col items-center justify-center rounded-md border border-border bg-[#111827] p-4 text-center">
+              <BarChart3 className="mb-2 h-5 w-5 text-muted-foreground" />
+              <p className="text-sm text-foreground">No throughput data available.</p>
+              <p className="mt-2 text-xs text-muted-foreground">Connect a backend analytics endpoint to populate this panel.</p>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="h-full lg:col-span-1">
+          <CardHeader>
+            <CardTitle className="text-sm font-semibold">System Summary</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {stats
+              .filter((stat) => typeof stat.value === "number")
+              .map((stat) => (
+                <div key={stat.title} className="rounded-md border border-border bg-[#111827] p-3">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">{stat.title}</span>
+                    <Badge variant={stat.value && stat.value > 0 ? "success" : "warning"}>
+                      {stat.value ?? 0}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            {!hasAnyMetricData && !queryStates.some((query) => query.isLoading) && (
+              <div className="rounded-md border border-border bg-[#111827] p-3 text-xs text-muted-foreground">
+                No dashboard metrics available from backend.
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-semibold">Recent Activity</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Event</TableHead>
+                <TableHead>Actor</TableHead>
+                <TableHead>Scope</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Time</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell colSpan={5} className="py-8 text-center">
+                  <p className="text-sm text-foreground">No recent activity available.</p>
+                  <p className="mt-2 text-xs text-muted-foreground">No backend activity feed is configured for this dashboard.</p>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   )
 }
