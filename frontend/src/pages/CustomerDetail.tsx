@@ -58,7 +58,7 @@ export default function CustomerDetailPage() {
   if (error && !displayedCustomer) {
     return (
       <div className="space-y-4">
-        <Button variant="outline" onClick={() => navigate("/customers")}>
+        <Button variant="outline" onClick={() => navigate("/masters/customers")}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Customers
         </Button>
@@ -78,7 +78,7 @@ export default function CustomerDetailPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-2">
-          <Button variant="outline" onClick={() => navigate("/customers")}>
+          <Button variant="outline" onClick={() => navigate("/masters/customers")}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Customers
           </Button>
@@ -214,7 +214,7 @@ export default function CustomerDetailPage() {
         customer={displayedCustomer}
         open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
-        onDeleted={() => navigate("/customers")}
+        onDeleted={() => navigate("/masters/customers")}
       />
     </div>
   )

@@ -7,9 +7,12 @@ import { useAuthStore } from "@/stores/authStore"
 import LoginPage from "@/pages/Login"
 import DashboardPage from "@/pages/Dashboard"
 import UsersPage from "@/pages/Users"
+import UserRolesPage from "@/pages/UserRoles"
 import CustomersPage from "@/pages/Customers"
+import CustomerTypesPage from "@/pages/CustomerTypes"
 import CustomerDetailPage from "@/pages/CustomerDetail"
 import ProductsPage from "@/pages/Products"
+import ProductCategoriesPage from "@/pages/ProductCategories"
 import WarehousesPage from "@/pages/Warehouses"
 import LocationsPage from "@/pages/Locations"
 
@@ -61,31 +64,47 @@ export const router = createBrowserRouter([
         element: <AdminLayoutWrapper />,
         children: [
           {
+            path: "/masters",
+            element: <Navigate to="/masters/users" replace />,
+          },
+          {
             path: "/",
             element: <DashboardPage />,
           },
           {
-            path: "/users",
+            path: "/masters/users",
             element: <UsersPage />,
           },
           {
-            path: "/customers",
+            path: "/masters/user-roles",
+            element: <UserRolesPage />,
+          },
+          {
+            path: "/masters/customers",
             element: <CustomersPage />,
           },
           {
-            path: "/customers/:id",
+            path: "/masters/customer-types",
+            element: <CustomerTypesPage />,
+          },
+          {
+            path: "/masters/customers/:id",
             element: <CustomerDetailPage />,
           },
           {
-            path: "/products",
+            path: "/masters/products",
             element: <ProductsPage />,
           },
           {
-            path: "/warehouses",
+            path: "/masters/product-categories",
+            element: <ProductCategoriesPage />,
+          },
+          {
+            path: "/masters/warehouses",
             element: <WarehousesPage />,
           },
           {
-            path: "/locations",
+            path: "/masters/locations",
             element: <LocationsPage />,
           },
         ],

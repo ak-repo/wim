@@ -203,7 +203,7 @@ export default function CustomersPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => navigate(`/customers/${customer.id}`)}
+                            onClick={() => navigate(`/masters/customers/${customer.id}`)}
                             title="View customer"
                           >
                             <Eye className="h-4 w-4" />

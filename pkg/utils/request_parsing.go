@@ -35,7 +35,7 @@ func DecodeJSON(w http.ResponseWriter, r *http.Request, dst any) bool {
 func ParseID(w http.ResponseWriter, r *http.Request) (int, bool) {
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || id <= 0 {
-		response.WriteError(w, http.StatusBadRequest, apperrors.CodeInvalidInput, "invalid product id")
+		response.WriteError(w, http.StatusBadRequest, apperrors.CodeInvalidInput, "invalid id")
 		return 0, false
 	}
 	return id, true

@@ -68,4 +68,30 @@ func AdminRoutes(r chi.Router, handlers *handler.Handler, tokenManager auth.Toke
 		warehouses.Delete("/{id}", handlers.Warehouse.DeleteWarehouse)
 	})
 
+	// Customer Types Routes
+	privateRoutes.Route("/customer-types", func(customerTypes chi.Router) {
+		customerTypes.Get("/", handlers.CustomerType.ListCustomerTypes)
+		customerTypes.Post("/", handlers.CustomerType.CreateCustomerType)
+		customerTypes.Get("/{id}", handlers.CustomerType.GetCustomerTypeByID)
+		customerTypes.Put("/{id}", handlers.CustomerType.UpdateCustomerType)
+		customerTypes.Delete("/{id}", handlers.CustomerType.DeleteCustomerType)
+	})
+
+	// User Roles Routes
+	privateRoutes.Route("/user-roles", func(userRoles chi.Router) {
+		userRoles.Get("/", handlers.UserRole.ListUserRoles)
+		userRoles.Post("/", handlers.UserRole.CreateUserRole)
+		userRoles.Get("/{id}", handlers.UserRole.GetUserRoleByID)
+		userRoles.Put("/{id}", handlers.UserRole.UpdateUserRole)
+		userRoles.Delete("/{id}", handlers.UserRole.DeleteUserRole)
+	})
+
+	// Product Categories Routes
+	privateRoutes.Route("/product-categories", func(productCategories chi.Router) {
+		productCategories.Get("/", handlers.ProductCategory.ListProductCategories)
+		productCategories.Post("/", handlers.ProductCategory.CreateProductCategory)
+		productCategories.Get("/{id}", handlers.ProductCategory.GetProductCategoryByID)
+		productCategories.Put("/{id}", handlers.ProductCategory.UpdateProductCategory)
+		productCategories.Delete("/{id}", handlers.ProductCategory.DeleteProductCategory)
+	})
 }

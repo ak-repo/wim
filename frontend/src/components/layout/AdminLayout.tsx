@@ -1,5 +1,5 @@
 import * as React from "react"
-import { useLocation } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
 import {
   LayoutDashboard,
   Users,
@@ -11,6 +11,9 @@ import {
   X,
   LogOut,
   ChevronLeft,
+  ChevronRight,
+  Shield,
+  Tag,
 } from "lucide-react"
 import { cn } from "@/utils"
 import { useLogout } from "@/features/auth/hooks"
@@ -21,13 +24,51 @@ interface SidebarItem {
   icon: React.ComponentType<{ className?: string }>
 }
 
-const navigation: SidebarItem[] = [
+interface SidebarGroup {
+  name: string
+  icon: React.ComponentType<{ className?: string }>
+  items: SidebarItem[]
+  defaultPath: string
+}
+
+const navigation: (SidebarItem | SidebarGroup)[] = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Users", href: "/users", icon: Users },
-  { name: "Customers", href: "/customers", icon: UserRound },
-  { name: "Products", href: "/products", icon: Package },
-  { name: "Warehouses", href: "/warehouses", icon: Warehouse },
-  { name: "Locations", href: "/locations", icon: MapPin },
+  {
+    name: "User Master",
+    icon: Shield,
+    items: [
+      { name: "Users", href: "/masters/users", icon: Users },
+      { name: "User Roles", href: "/masters/user-roles", icon: Tag },
+    ],
+    defaultPath: "/masters/users",
+  },
+  {
+    name: "Product Master",
+    icon: Package,
+    items: [
+      { name: "Products", href: "/masters/products", icon: Package },
+      { name: "Product Categories", href: "/masters/product-categories", icon: Tag },
+    ],
+    defaultPath: "/masters/products",
+  },
+  {
+    name: "Customer Master",
+    icon: UserRound,
+    items: [
+      { name: "Customers", href: "/masters/customers", icon: UserRound },
+      { name: "Customer Types", href: "/masters/customer-types", icon: Tag },
+    ],
+    defaultPath: "/masters/customers",
+  },
+  {
+    name: "Warehouse Master",
+    icon: Warehouse,
+    items: [
+      { name: "Warehouses", href: "/masters/warehouses", icon: Warehouse },
+      { name: "Locations", href: "/masters/locations", icon: MapPin },
+    ],
+    defaultPath: "/masters/warehouses",
+  },
 ]
 
 const Sidebar: React.FC<{
@@ -37,7 +78,44 @@ const Sidebar: React.FC<{
   setCollapsed: (collapsed: boolean) => void
 }> = ({ open, setOpen, collapsed, setCollapsed }) => {
   const location = useLocation()
+  const navigate = useNavigate()
   const logout = useLogout()
+  const [expandedGroups, setExpandedGroups] = React.useState<Set<string>>(new Set())
+
+  const isGroupActive = (group: SidebarGroup) => {
+    return group.items.some(
+      (item) => location.pathname === item.href || location.pathname.startsWith(`${item.href}/`)
+    )
+  }
+
+  const isItemActive = (item: SidebarItem) => {
+    return location.pathname === item.href
+  }
+
+  const toggleGroup = (groupName: string, group: SidebarGroup) => {
+    setExpandedGroups((prev) => {
+      const newSet = new Set(prev)
+      if (newSet.has(groupName)) {
+        newSet.delete(groupName)
+      } else {
+        newSet.add(groupName)
+        navigate(group.defaultPath)
+      }
+      return newSet
+    })
+  }
+
+  React.useEffect(() => {
+    const activeGroup = navigation.find((item) => {
+      if ("items" in item) {
+        return isGroupActive(item)
+      }
+      return false
+    })
+    if (activeGroup && "name" in activeGroup) {
+      setExpandedGroups((prev) => new Set([...prev, activeGroup.name]))
+    }
+  }, [location.pathname])
 
   return (
     <>
@@ -97,34 +175,100 @@ const Sidebar: React.FC<{
           <nav className="flex-1 overflow-y-auto p-3">
             <ul className="space-y-1">
               {navigation.map((item) => {
-                const isActive = location.pathname === item.href
-                const Icon = item.icon
-                return (
-                  <li key={item.name}>
-                    <a
-                      href={item.href}
-                      className={cn(
-                        "flex items-center gap-3 rounded-md border border-transparent px-3 py-2 text-sm font-medium transition-colors",
-                        isActive
-                          ? "border-primary/40 bg-primary/20 text-primary"
-                          : "text-muted-foreground hover:border-border hover:bg-muted/60 hover:text-foreground",
-                        collapsed && "justify-center px-2"
-                      )}
-                      title={collapsed ? item.name : undefined}
-                    >
-                      <Icon className="h-5 w-5 flex-shrink-0" />
-                      <span
+                if ("items" in item) {
+                  const isExpanded = expandedGroups.has(item.name)
+                  const isActive = isGroupActive(item)
+                  const Icon = item.icon
+                  return (
+                    <li key={item.name}>
+                      <button
+                        onClick={() => toggleGroup(item.name, item)}
                         className={cn(
-                          "overflow-hidden whitespace-nowrap transition-all",
-                          collapsed && "w-0 opacity-0",
-                          !collapsed && "w-auto opacity-100"
+                          "flex w-full items-center gap-3 rounded-md border border-transparent px-3 py-2 text-sm font-medium transition-colors",
+                          isActive
+                            ? "border-primary/40 bg-primary/20 text-primary"
+                            : "text-muted-foreground hover:border-border hover:bg-muted/60 hover:text-foreground",
+                          collapsed && "justify-center px-2"
                         )}
+                        title={collapsed ? item.name : undefined}
                       >
-                        {item.name}
-                      </span>
-                    </a>
-                  </li>
-                )
+                        <Icon className="h-5 w-5 flex-shrink-0" />
+                        <span
+                          className={cn(
+                            "flex-1 text-left overflow-hidden whitespace-nowrap transition-all",
+                            collapsed && "w-0 opacity-0",
+                            !collapsed && "w-auto opacity-100"
+                          )}
+                        >
+                          {item.name}
+                        </span>
+                        {!collapsed && (
+                          <ChevronRight
+                            className={cn(
+                              "h-4 w-4 flex-shrink-0 transition-transform",
+                              isExpanded && "rotate-90"
+                            )}
+                          />
+                        )}
+                      </button>
+                      {!collapsed && isExpanded && (
+                        <ul className="mt-1 ml-4 space-y-1">
+                          {item.items.map((subItem) => {
+                            const isSubItemActive = isItemActive(subItem)
+                            const SubIcon = subItem.icon
+                            return (
+                              <li key={subItem.name}>
+                                <a
+                                  href={subItem.href}
+                                  className={cn(
+                                    "flex items-center gap-3 rounded-md border border-transparent px-3 py-2 text-sm font-medium transition-colors",
+                                    isSubItemActive
+                                      ? "border-primary/40 bg-primary/20 text-primary"
+                                      : "text-muted-foreground hover:border-border hover:bg-muted/60 hover:text-foreground"
+                                  )}
+                                >
+                                  <SubIcon className="h-4 w-4 flex-shrink-0" />
+                                  <span className="overflow-hidden whitespace-nowrap">
+                                    {subItem.name}
+                                  </span>
+                                </a>
+                              </li>
+                            )
+                          })}
+                        </ul>
+                      )}
+                    </li>
+                  )
+                } else {
+                  const isActive = isItemActive(item)
+                  const Icon = item.icon
+                  return (
+                    <li key={item.name}>
+                      <a
+                        href={item.href}
+                        className={cn(
+                          "flex items-center gap-3 rounded-md border border-transparent px-3 py-2 text-sm font-medium transition-colors",
+                          isActive
+                            ? "border-primary/40 bg-primary/20 text-primary"
+                            : "text-muted-foreground hover:border-border hover:bg-muted/60 hover:text-foreground",
+                          collapsed && "justify-center px-2"
+                        )}
+                        title={collapsed ? item.name : undefined}
+                      >
+                        <Icon className="h-5 w-5 flex-shrink-0" />
+                        <span
+                          className={cn(
+                            "overflow-hidden whitespace-nowrap transition-all",
+                            collapsed && "w-0 opacity-0",
+                            !collapsed && "w-auto opacity-100"
+                          )}
+                        >
+                          {item.name}
+                        </span>
+                      </a>
+                    </li>
+                  )
+                }
               })}
             </ul>
           </nav>
